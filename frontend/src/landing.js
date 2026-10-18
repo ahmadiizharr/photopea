@@ -11,6 +11,21 @@ addEventListener('scroll', onScroll, { passive: true });
 onScroll();
 
 $('#year').textContent = new Date().getFullYear();
+
+// ---------- ticker ----------
+// Half the track must be wider than the screen or the loop shows a gap; add groups in pairs to
+// keep the halves identical, and scale the duration so the speed is the same at any width.
+const ticker = $('#ticker-track');
+const TICK_SPEED = 40; // px per second, same pace as before
+function fillTicker() {
+  const group = ticker.firstElementChild;
+  const w = group.offsetWidth;
+  if (!w) return;
+  while ((ticker.children.length / 2) * w < innerWidth + 120) ticker.append(group.cloneNode(true), group.cloneNode(true));
+  ticker.style.setProperty('--tick-dur', `${((ticker.children.length / 2) * w) / TICK_SPEED}s`);
+}
+document.fonts.ready.then(fillTicker);
+addEventListener('resize', fillTicker, { passive: true });
 $('#demo-date').textContent = stamp();
 
 // ---------- hero demo booth ----------

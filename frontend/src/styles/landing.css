@@ -305,20 +305,23 @@
   border-block: 3px solid var(--ink);
   transform: rotate(-1.4deg);
 }
+/* The track moves by half its width and holds an even number of identical groups, so the last
+   frame lines up with the first. Each group ends with the same gap it has inside (gap alone sits
+   only between items, which left the loop half a gap short). landing.js adds groups on wide screens. */
 .ticker-track {
   display: flex;
   width: max-content;
-  align-items: center;
-  gap: 26px;
   padding: 16px 0;
   font: 800 30px/1 var(--display);
   font-variation-settings: 'wdth' 80;
   text-transform: uppercase;
   letter-spacing: .01em;
-  animation: tick 32s linear infinite;
+  animation: tick var(--tick-dur, 32s) linear infinite;
+  will-change: transform;
 }
+.ticker-group { display: flex; flex: none; align-items: center; gap: 26px; padding-right: 26px; }
 .ticker-track b { color: var(--pink); font-size: 26px; }
-.ticker-track span:nth-of-type(3n) { color: var(--yellow); }
+.ticker-group span:nth-of-type(3n) { color: var(--yellow); }
 @keyframes tick { to { transform: translateX(-50%); } }
 
 /* ---------- section heads ---------- */
