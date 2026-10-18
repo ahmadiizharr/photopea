@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS packs (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
+    category TEXT NOT NULL DEFAULT '',
     price INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'draft',
     sort INTEGER NOT NULL DEFAULT 0,
@@ -59,7 +60,9 @@ CREATE TABLE IF NOT EXISTS packages (
 );
 """
 
-PACK_FIELDS = ("name", "description", "price", "status", "sort")
+PACK_FIELDS = ("name", "description", "category", "price", "status", "sort")
+# Added after the first release; created on start-up when missing.
+EXTRA_COLUMNS = {"packs": {"category": "TEXT NOT NULL DEFAULT ''"}}
 PACKAGE_FIELDS = ("name", "price", "prints_included", "extra_print_price", "max_prints", "active", "sort")
 
 
@@ -73,10 +76,16 @@ class Catalog:
         self._db.execute("PRAGMA journal_mode=WAL")
         self._db.execute("PRAGMA foreign_keys=ON")
         self._db.executescript(SCHEMA)
+        for table, cols in EXTRA_COLUMNS.items():
+            have = {r[1] for r in self._db.execute(f"PRAGMA table_info({table})")}
+            for col, kind in cols.items():
+                if col not in have:
+                    self._db.execute(f"ALTER TABLE {table} ADD COLUMN {col} {kind}")
         self._db.commit()
 
     def close(self) -> None:
-        self._db.close()
+        with self._lock:  # never under a query still running in a worker thread
+            self._db.close()
 
     def _q(self, sql: str, args: tuple = ()) -> list[sqlite3.Row]:
         with self._lock:
@@ -108,8 +117,8 @@ class Catalog:
         pid = new_id()
         sort = self._q("SELECT COALESCE(MAX(sort), 0) + 1 FROM packs")[0][0]
         self._w(
-            "INSERT INTO packs (id, name, description, price, status, sort, created_at) VALUES (?,?,?,?,?,?,?)",
-            (pid, data["name"], data.get("description", ""), data.get("price", 0), data.get("status", "draft"), sort, now()),
+            "INSERT INTO packs (id, name, description, category, price, status, sort, created_at) VALUES (?,?,?,?,?,?,?,?)",
+            (pid, data["name"], data.get("description", ""), data.get("category", ""), data.get("price", 0), data.get("status", "draft"), sort, now()),
         )
         return self.pack(pid)
 
@@ -207,7 +216,7 @@ class Catalog:
     def live_packs(self) -> list[dict]:
         """Active packs that have at least one active frame, in booth order."""
         rows = self._q(
-            """SELECT id, name, description, price FROM packs p WHERE status = 'aktif'
+            """SELECT id, name, description, category, price FROM packs p WHERE status = 'aktif'
                AND EXISTS (SELECT 1 FROM frames f WHERE f.pack_id = p.id AND f.status = 'aktif') ORDER BY sort, created_at"""
         )
         return [dict(r) for r in rows]
@@ -217,6 +226,26 @@ class Catalog:
             "SELECT 1 FROM frames f JOIN packs p ON p.id = f.pack_id WHERE f.id = ? AND f.status = 'aktif' AND p.status = 'aktif'",
             (frame_id,),
         ))
+
+    def quote(self, package_id: int | None, frame_id: str | None, prints: int | None) -> dict:
+        """Price of a booth session: package + extra prints + the frame's pack. ValueError says why not."""
+        pack_price = 0
+        if frame_id:
+            f = self.live_frame(frame_id)
+            if f is None:
+                raise ValueError("frame tidak tersedia")
+            pack_price = f["pack_price"]
+        total = 0
+        if package_id is not None:
+            pk = self.package(package_id)
+            if pk is None or not pk["active"]:
+                raise ValueError("paket tidak tersedia")
+            if prints is None:
+                prints = pk["prints_included"]
+            if prints > pk["max_prints"]:
+                raise ValueError(f"paket {pk['name']} maksimal {pk['max_prints']} cetak")
+            total = pk["price"] + max(0, prints - pk["prints_included"]) * pk["extra_print_price"]
+        return {"prints": prints, "pack_price": pack_price, "total": total + pack_price}
 
     # ---------- packages ----------
     @staticmethod

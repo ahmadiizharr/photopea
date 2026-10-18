@@ -131,4 +131,5 @@ class SessionStore:
         return len(codes)
 
     def close(self) -> None:
-        self._db.close()
+        with self._lock:  # never under a query still running in a worker thread
+            self._db.close()

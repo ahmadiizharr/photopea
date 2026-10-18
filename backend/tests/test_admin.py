@@ -309,6 +309,74 @@ def test_builtin_session_still_needs_layout_and_frame(client):
     assert r.status_code == 201 and r.json()["layout_name"] == "Strip 4"
 
 
+# ---------------- orders + vouchers ----------------
+def order(c, **body):
+    return c.post("/api/orders", json=body)
+
+
+def voucher(c, **body):
+    return c.post("/api/admin/vouchers", json=body, headers=H)
+
+
+def test_pack_category_reaches_the_booth(admin):
+    f = live_frame(admin)
+    admin.patch(f"/api/admin/packs/{f['pack_id']}", json={"category": "Wedding"}, headers=H)
+    assert admin.get("/api/booth").json()["packs"][0]["category"] == "Wedding"
+
+
+def test_order_paid_at_kasir_is_used_once(admin):
+    p = package(admin).json()
+    f = live_frame(admin)  # pack 25000
+    o = order(admin, package=p["id"], template=f["id"], prints=2).json()
+    assert o["status"] == "pending" and o["total"] == 35000 + 20000 + 25000 and len(o["code"]) == 4
+    assert session(admin, template=f["id"], order=o["id"]).status_code == 422  # not paid yet
+
+    queue = admin.get("/api/admin/orders").json()
+    assert queue[0]["id"] == o["id"] and queue[0]["package_name"] == "Fast Snap" and queue[0]["frame_name"] == "Pink Riso"
+    assert admin.post(f"/api/admin/orders/{o['id']}/paid", headers=H).json()["status"] == "paid"
+    assert admin.get(f"/api/orders/{o['id']}").json()["status"] == "paid"
+
+    assert session(admin, layout="strip4", frame="pink", order=o["id"]).status_code == 422  # other design
+    s = session(admin, template=f["id"], order=o["id"]).json()
+    assert s["prints"] == 2 and s["total"] == 80000
+    assert session(admin, template=f["id"], order=o["id"]).status_code == 422  # spent
+    assert admin.post(f"/api/admin/orders/{o['id']}/cancel", headers=H).status_code == 409
+
+
+def test_vouchers_pay_all_or_part_and_come_back_on_cancel(admin):
+    p = package(admin).json()
+    assert voucher(admin, kind="gratis", code="GRATIS1").status_code == 201
+    assert voucher(admin, kind="gratis", code="gratis1").status_code == 409
+    assert voucher(admin, kind="potongan", value=0).status_code == 422
+
+    o = order(admin, package=p["id"], voucher=" gratis1 ").json()
+    assert o["status"] == "paid" and o["discount"] == 35000 and o["total"] == 0
+    assert "habis" in order(admin, package=p["id"], voucher="GRATIS1").json()["detail"]
+
+    codes = voucher(admin, kind="potongan", value=10000, count=3).json()
+    assert len({v["code"] for v in codes}) == 3 and all(len(v["code"]) == 8 for v in codes)
+    o = order(admin, package=p["id"], voucher=codes[0]["code"]).json()
+    assert o["status"] == "pending" and o["total"] == 25000
+    admin.post(f"/api/orders/{o['id']}/cancel")
+    assert next(v for v in admin.get("/api/admin/vouchers").json() if v["code"] == codes[0]["code"])["used"] == 0
+
+    admin.patch(f"/api/admin/vouchers/{codes[1]['code']}", json={"active": False}, headers=H)
+    assert order(admin, package=p["id"], voucher=codes[1]["code"]).status_code == 422
+    voucher(admin, kind="gratis", code="LAMA", expires_at="2020-01-01")
+    assert "kedaluwarsa" in order(admin, package=p["id"], voucher="LAMA").json()["detail"]
+    assert order(admin, package=p["id"], voucher="NGASAL99").status_code == 422
+
+
+def test_unpaid_orders_expire_and_free_their_voucher(admin):
+    from datetime import timedelta
+    p = package(admin).json()
+    voucher(admin, kind="potongan", value=5000, code="SEBAGIAN")
+    o = order(admin, package=p["id"], voucher="SEBAGIAN").json()
+    assert admin.app.state.orders.expire_pending(timedelta(0)) == 1
+    assert admin.get(f"/api/orders/{o['id']}").json()["status"] == "cancelled"
+    assert admin.get("/api/admin/vouchers").json()[0]["used"] == 0
+
+
 # ---------------- demo data ----------------
 def test_demo_seed_fills_booth_and_removes_only_itself(admin):
     def api(method, path, payload=None, files=None):
@@ -319,8 +387,10 @@ def test_demo_seed_fills_booth_and_removes_only_itself(admin):
     mine = make_pack(admin, name="Pack Asli")
     demo.seed(api, log=lambda _: None)
     booth = admin.get("/api/booth").json()
-    assert [p["name"] for p in booth["packs"]] == ["Demo · Klasik", "Demo · Pastel", "Demo · Wedding"]
-    assert len(booth["frames"]) == 6 and {p["name"] for p in booth["packages"]} == {"Demo Basic", "Demo Premium"}
+    assert [p["name"] for p in booth["packs"]] == ["Demo · Klasik", "Demo · Pastel", "Demo · Wedding", "Demo · Wisuda"]
+    assert [p["category"] for p in booth["packs"]] == ["Klasik", "Ulang tahun", "Wedding", "Wisuda"]
+    assert len(booth["frames"]) == 8 and {p["name"] for p in booth["packages"]} == {"Demo Basic", "Demo Premium"}
+    assert {v["code"] for v in admin.get("/api/admin/vouchers").json()} == {"DEMO-GRATIS", "DEMO-HEMAT10"}
     packs = admin.get("/api/admin/packs").json()
     errors = [i for p in packs for f in p["frames"] for i in f["issues"] if i["level"] != "info"]
     assert errors == []
@@ -328,3 +398,4 @@ def test_demo_seed_fills_booth_and_removes_only_itself(admin):
     demo.remove(api, log=lambda _: None)
     assert [p["id"] for p in admin.get("/api/admin/packs").json()] == [mine["id"]]
     assert admin.get("/api/admin/packages").json() == []
+    assert admin.get("/api/admin/vouchers").json() == []

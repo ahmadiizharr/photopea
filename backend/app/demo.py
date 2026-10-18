@@ -5,7 +5,8 @@
 
 Everything goes through the admin API, like the dashboard, so the files end up owned by the
 service user and every frame passes the same hole detector. Demo items are recognised by name
-("Demo · …" packs, "Demo …" packages) and replaced on every run; nothing else is touched.
+("Demo · …" packs, "Demo …" packages, "DEMO-…" vouchers) and replaced on every run; nothing
+else is touched.
 """
 
 import http.cookiejar
@@ -19,30 +20,40 @@ from PIL import Image, ImageDraw, ImageFont
 
 PACK_PREFIX = "Demo · "
 PACKAGE_PREFIX = "Demo "
+VOUCHER_PREFIX = "DEMO-"
 
 CREAM = {"bg": (251, 247, 239), "dot": (240, 228, 206), "ink": (22, 17, 14), "accent": (255, 61, 139)}
 PINK = {"bg": (255, 214, 229), "dot": (255, 190, 214), "ink": (122, 28, 72), "accent": (255, 255, 255)}
 BLUE = {"bg": (210, 232, 255), "dot": (186, 216, 250), "ink": (29, 79, 216), "accent": (255, 255, 255)}
 IVORY = {"bg": (250, 246, 240), "dot": (238, 228, 214), "ink": (92, 70, 48), "accent": (214, 180, 120)}
 SAGE = {"bg": (222, 236, 224), "dot": (204, 224, 207), "ink": (34, 92, 60), "accent": (255, 255, 255)}
+NAVY = {"bg": (28, 40, 86), "dot": (42, 58, 114), "ink": (255, 210, 62), "accent": (255, 61, 139)}
 
 # (frame name, format id, preset id from shared/layouts.json, style, title, line under the title)
 PACKS = [
-    {"name": "Demo · Klasik", "description": "Kertas krem, gratis untuk semua paket", "price": 0, "status": "aktif", "frames": [
+    {"name": "Demo · Klasik", "category": "Klasik", "description": "Kertas krem, gratis untuk semua paket", "price": 0, "status": "aktif", "frames": [
         ("Krem Strip", "4r-strip", "4-kembar", CREAM, "jepret", "demo · klasik"),
         ("Krem Grid", "4r", "grid-2x2", CREAM, "jepret", "demo · klasik"),
     ]},
-    {"name": "Demo · Pastel", "description": "Pink & biru muda buat wisuda dan ulang tahun", "price": 10000, "status": "aktif", "frames": [
+    {"name": "Demo · Pastel", "category": "Ulang tahun", "description": "Pink & biru muda buat ulang tahun", "price": 10000, "status": "aktif", "frames": [
         ("Pastel Strip", "4r-strip", "3-kembar", PINK, "happy day!", "demo · pastel"),
         ("Pastel Polaroid", "polaroid-5r", "polaroid", BLUE, "hari ini", "demo · pastel"),
     ]},
-    {"name": "Demo · Wedding", "description": "5R landscape dengan nama pengantin", "price": 25000, "status": "aktif", "frames": [
+    {"name": "Demo · Wedding", "category": "Wedding", "description": "5R landscape dengan nama pengantin", "price": 25000, "status": "aktif", "frames": [
         ("Rani & Dimas", "5r-landscape", "besar-2-kecil", IVORY, "Rani & Dimas", "18 · 10 · 2026 · the wedding"),
         ("Wedding 2 Foto", "5r-landscape", "2-foto", IVORY, "Nama & Nama", "tanggal · tempat"),
     ]},
-    {"name": "Demo · Draft", "description": "Contoh pack draft: tidak tampil di booth", "price": 15000, "status": "draft", "frames": [
+    {"name": "Demo · Wisuda", "category": "Wisuda", "description": "Biru dongker & emas untuk hari kelulusan", "price": 15000, "status": "aktif", "frames": [
+        ("Toga Grid", "4r", "grid-2x3", NAVY, "selamat wisuda!", "class of 2026"),
+        ("Toga Polaroid", "polaroid-5r", "2-foto", NAVY, "lulus!", "class of 2026"),
+    ]},
+    {"name": "Demo · Draft", "category": "Wisuda", "description": "Contoh pack draft: tidak tampil di booth", "price": 15000, "status": "draft", "frames": [
         ("Sage Grid", "5r", "grid-2x2", SAGE, "draft", "tidak tampil di booth"),
     ]},
+]
+VOUCHERS = [
+    {"code": "DEMO-GRATIS", "kind": "gratis", "max_uses": 100, "note": "Demo: sesi gratis"},
+    {"code": "DEMO-HEMAT10", "kind": "potongan", "value": 10000, "max_uses": 100, "note": "Demo: potongan Rp 10.000"},
 ]
 PACKAGES = [
     {"name": "Demo Basic", "price": 25000, "prints_included": 1, "extra_print_price": 10000, "max_prints": 3},
@@ -158,14 +169,18 @@ def remove(api, log=print) -> None:
         if p["name"].startswith(PACKAGE_PREFIX):
             api("DELETE", f"/api/admin/packages/{p['id']}")
             log(f"- paket {p['name']} dihapus")
+    for v in api("GET", "/api/admin/vouchers"):
+        if v["code"].startswith(VOUCHER_PREFIX):
+            api("DELETE", f"/api/admin/vouchers/{v['code']}")
+            log(f"- voucher {v['code']} dihapus")
 
 
 def seed(api, log=print) -> None:
-    """Replace the demo packs, frames and packages. `api` is logged in already."""
+    """Replace the demo packs, frames, packages and vouchers. `api` is logged in already."""
     remove(api, log)
     formats = {f["id"]: f for f in api("GET", "/api/layouts")["formats"]}
     for spec in PACKS:
-        pack = api("POST", "/api/admin/packs", {k: spec[k] for k in ("name", "description", "price", "status")})
+        pack = api("POST", "/api/admin/packs", {k: spec[k] for k in ("name", "category", "description", "price", "status")})
         for name, fmt_id, preset_id, style, title, sub in spec["frames"]:
             fmt = formats[fmt_id]
             preset = next(p for p in fmt["presets"] if p["id"] == preset_id)
@@ -179,3 +194,6 @@ def seed(api, log=print) -> None:
     for spec in PACKAGES:
         api("POST", "/api/admin/packages", spec)
         log(f"+ paket {spec['name']}")
+    for spec in VOUCHERS:
+        api("POST", "/api/admin/vouchers", spec)
+        log(f"+ voucher {spec['code']}")

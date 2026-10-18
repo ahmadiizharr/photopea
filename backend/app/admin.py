@@ -24,6 +24,7 @@ class LoginIn(BaseModel):
 class PackIn(BaseModel):
     name: Name
     description: str = Field("", max_length=160)
+    category: str = Field("", max_length=30)
     price: Rupiah = 0
     status: Status = "draft"
 
@@ -31,6 +32,7 @@ class PackIn(BaseModel):
 class PackPatch(BaseModel):
     name: Name | None = None
     description: str | None = Field(None, max_length=160)
+    category: str | None = Field(None, max_length=30)
     price: Rupiah | None = None
     status: Status | None = None
     sort: int | None = None

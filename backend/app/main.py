@@ -17,7 +17,9 @@ from . import media
 from .admin import create_router
 from .auth import Auth, load_secret
 from .catalog import Catalog
+from .checkout import create_router as create_checkout_router
 from .config import Settings
+from .orders import Orders
 from .store import Session, SessionStore
 
 log = logging.getLogger("photobox")
@@ -38,6 +40,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         store = SessionStore(settings.db_path, settings.media_dir, timedelta(days=settings.retention_days))
         app.state.store = store
         app.state.catalog = Catalog(settings.db_path, settings.frames_dir)
+        app.state.orders = Orders(settings.db_path)
         app.state.auth = Auth(load_secret(settings.secret_path), settings.admin_user, settings.admin_hash, settings.admin_session_days)
 
         async def janitor():
@@ -45,13 +48,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 n = await asyncio.to_thread(store.purge_expired)
                 if n:
                     log.info("purged %d expired sessions", n)
+                n = await asyncio.to_thread(app.state.orders.expire_pending, timedelta(hours=1))
+                if n:
+                    log.info("cancelled %d unpaid orders", n)
                 await asyncio.sleep(3600)
 
         task = asyncio.create_task(janitor())
         yield
         task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
         store.close()
         app.state.catalog.close()
+        app.state.orders.close()
 
     app = FastAPI(title="photobox", lifespan=lifespan, docs_url="/api/docs", openapi_url="/api/openapi.json", redoc_url=None)
 
@@ -115,15 +124,26 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         template: Annotated[str | None, Form(description="ID frame upload dari dashboard")] = None,
         package: Annotated[int | None, Form(description="ID paket harga yang dipilih tamu")] = None,
         prints: Annotated[int | None, Form(ge=0, le=20, description="Jumlah lembar yang dicetak")] = None,
+        order: Annotated[str | None, Form(description="ID pesanan yang sudah lunas; paket & cetak diambil dari sini")] = None,
     ):
         cat: Catalog = request.app.state.catalog
-        pack_price = 0
+        orders: Orders = request.app.state.orders
+        paid = None
+        if order:
+            paid = orders.order(order)
+            if paid is None or paid["status"] != "paid":
+                raise HTTPException(422, "pesanan belum dibayar atau sudah dipakai")
+            if (paid["template"] or None) != (template or None):
+                raise HTTPException(422, "frame berbeda dengan yang dibayar")
+            package = paid["package_id"]
+            if package is not None:
+                prints = paid["prints"]  # the package fixed how many sheets were paid for
         if template:
-            tpl = cat.live_frame(template)
+            # a paid order keeps its frame even if the dashboard switched it off meanwhile
+            tpl = cat.frame(template) if paid else cat.live_frame(template)
             if tpl is None:
                 raise HTTPException(422, "frame tidak tersedia")
             layout, frame, max_shots = tpl["format"], tpl["id"], tpl["n_photos"]
-            pack_price = tpl["pack_price"]
         else:
             spec = layouts.get(layout or "")
             if spec is None:
@@ -136,18 +156,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if not 1 <= len(shots) <= max_shots:
             raise HTTPException(422, f"layout {layout} butuh 1–{max_shots} foto")
         total = None
-        if package is not None:
-            pk = cat.package(package)
-            if pk is None or not pk["active"]:
-                raise HTTPException(422, "paket tidak tersedia")
-            if prints is None:
-                prints = pk["prints_included"]
-            if prints > pk["max_prints"]:
-                raise HTTPException(422, f"paket {pk['name']} maksimal {pk['max_prints']} cetak")
-            total = pk["price"] + max(0, prints - pk["prints_included"]) * pk["extra_print_price"]
-        # A paid pack is charged on top of the package (or alone when the booth has no packages).
-        if pack_price:
-            total = (total or 0) + pack_price
+        if paid:
+            total = paid["total"]  # what the guest actually paid, after any voucher
+        elif package is not None or template:
+            try:
+                q = cat.quote(package, template, prints)
+            except ValueError as e:
+                raise HTTPException(422, str(e))
+            prints = q["prints"]
+            # A paid pack is charged on top of the package (or alone when the booth has no packages).
+            if package is not None or q["pack_price"]:
+                total = q["total"]
 
         strip_bytes = await read_limited(strip)
         shot_bytes = [await read_limited(f) for f in shots]
@@ -166,13 +185,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         store: SessionStore = request.app.state.store
         code = store.reserve_code()
+        if paid and not orders.claim(order, code):
+            store.release(code)
+            raise HTTPException(422, "pesanan sudah dipakai")
         try:
             has_gif = await asyncio.to_thread(process, code)
-        except media.BadImage as e:
+        except BaseException as e:
             store.release(code)
-            raise HTTPException(422, str(e))
-        except BaseException:
-            store.release(code)
+            if paid:
+                orders.unclaim(order)
+            if isinstance(e, media.BadImage):
+                raise HTTPException(422, str(e))
             raise
         s = store.add(code, layout, frame, filter, len(shots), has_gif, template or None, package, prints, total)
         return {**public(s, request), "total": total}
@@ -204,6 +227,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return FileResponse(path, headers=headers)
 
     app.include_router(create_router(catalog, settings.max_frame_bytes))
+    app.include_router(create_checkout_router())
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException):

@@ -4,6 +4,8 @@ import { renderGallery } from './gallery.js';
 import { renderPack } from './pack.js';
 import { renderPackages } from './packages.js';
 import { renderGuide } from './guide.js';
+import { renderKasir } from './kasir.js';
+import { renderVouchers } from './vouchers.js';
 
 const view = $('#view');
 
@@ -22,6 +24,8 @@ const routes = [
   [/^#\/pack\/([a-z0-9]+)$/, 'galeri', (m) => renderPack(view, m[1])],
   [/^#\/paket$/, 'paket', () => renderPackages(view)],
   [/^#\/panduan$/, 'panduan', () => renderGuide(view)],
+  [/^#\/kasir$/, 'kasir', () => renderKasir(view)],
+  [/^#\/voucher$/, 'voucher', () => renderVouchers(view)],
 ];
 
 async function route() {

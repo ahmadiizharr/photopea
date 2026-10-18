@@ -2,6 +2,8 @@ import { api } from './api.js';
 import { $, $$, esc, formData, openForm, pill, priceLabel } from './ui.js';
 
 let filter = 'semua';
+/** Suggestions for the category field; guests see categories as tabs in the booth. */
+const CATEGORIES = ['Klasik', 'Wedding', 'Wisuda', 'Ulang tahun', 'Lucu', 'Corporate', 'Lebaran', 'Natal'];
 
 export function packMeta(p) {
   if (!p.frames.length) return 'Belum ada frame';
@@ -14,6 +16,8 @@ export function packMeta(p) {
 export const packFields = (p = {}) => `
   <label class="row"><span>Nama pack</span><input class="field" name="name" maxlength="40" required value="${esc(p.name)}" placeholder="Pack Pastel" /></label>
   <label class="row"><span>Deskripsi <small>(opsional)</small></span><input class="field" name="description" maxlength="160" value="${esc(p.description)}" placeholder="Frame pastel lucu buat wisuda" /></label>
+  <label class="row"><span>Kategori <small>(jadi tab di booth; kosong = Lainnya)</small></span><input class="field" name="category" maxlength="30" list="pack-categories" value="${esc(p.category)}" placeholder="Wedding" autocomplete="off" /></label>
+  <datalist id="pack-categories">${CATEGORIES.map((c) => `<option value="${c}"></option>`).join('')}</datalist>
   <div class="grid2">
     <label class="row"><span>Harga <small>(0 = gratis · ditambahkan ke total tamu)</small></span><input class="field" name="price" data-num inputmode="numeric" value="${p.price ?? 0}" /></label>
     <label class="row"><span>Status</span>
@@ -32,7 +36,7 @@ function card(p) {
       <div class="pack-shots">${shots.join('')}</div>
       <div class="pack-body">
         <div class="pack-top"><h3>${esc(p.name)}</h3><span class="price${p.price ? '' : ' free'}">${priceLabel(p.price)}</span></div>
-        <p class="pack-meta">${packMeta(p)}</p>
+        <p class="pack-meta">${p.category ? `${esc(p.category)} · ` : ''}${packMeta(p)}</p>
         <div>${pill(p.status === 'aktif')}</div>
         <a class="btn btn-pink btn-sm" href="#/pack/${p.id}">Kelola pack <span class="arr" aria-hidden="true">→</span></a>
       </div>

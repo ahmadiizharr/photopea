@@ -68,9 +68,19 @@
   ],
   "filters": [
     { "id": "normal", "name": "Normal" },
-    { "id": "bw", "name": "Hitam Putih" },
+    { "id": "cerah", "name": "Cerah" },
     { "id": "hangat", "name": "Hangat" },
+    { "id": "dingin", "name": "Dingin" },
+    { "id": "emas", "name": "Golden" },
+    { "id": "pastel", "name": "Pastel" },
+    { "id": "vintage", "name": "Vintage" },
     { "id": "pudar", "name": "Film Pudar" },
+    { "id": "matte", "name": "Matte" },
+    { "id": "sinema", "name": "Sinema" },
+    { "id": "lomo", "name": "Lomo" },
+    { "id": "sepia", "name": "Sepia" },
+    { "id": "bw", "name": "Hitam Putih" },
+    { "id": "noir", "name": "Noir" },
     { "id": "riso", "name": "Riso" }
   ],
   "formats": [

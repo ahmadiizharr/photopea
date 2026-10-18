@@ -8,6 +8,8 @@ export class ApiError extends Error {
 const FIELDS = {
   name: 'Nama', price: 'Harga', prints_included: 'Cetak termasuk', extra_print_price: 'Harga cetak tambahan',
   max_prints: 'Maks cetak', description: 'Deskripsi', username: 'Username', password: 'Password',
+  category: 'Kategori', code: 'Kode (4–24 huruf, angka, atau -)', value: 'Besar potongan', count: 'Jumlah kode',
+  max_uses: 'Maks pemakaian', expires_at: 'Berlaku sampai', note: 'Catatan',
 };
 
 function detailText(detail) {

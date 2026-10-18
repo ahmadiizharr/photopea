@@ -307,3 +307,19 @@ td.actions { text-align: right; }
   .upload-grid, .grid2 { grid-template-columns: 1fr; }
   .who .mono { display: none; }
 }
+
+/* ---------- kasir + voucher ---------- */
+.section-title { margin: 30px 0 14px; font: 800 24px/1.1 var(--display); letter-spacing: -.02em; }
+.orders { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.orders .empty { grid-column: 1 / -1; margin: 0; box-shadow: none; }
+.order { display: grid; gap: 4px; padding: 18px 20px; background: var(--yellow-soft); animation: arrive .4s var(--spring); }
+@keyframes arrive { from { transform: scale(.94); opacity: 0; } }
+.order .mono { margin: 0; color: var(--pink-deep); font-size: 10.5px; }
+.order-code { margin: 0; font: 500 52px/1.05 var(--mono); letter-spacing: .16em; }
+.order-total { margin: 0; font: 800 28px/1.1 var(--display); }
+.order-meta { margin: 0 0 8px; font-size: 14px; color: var(--ink-2); }
+.order-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.vcode { padding: 2px 8px; border: 1.5px solid var(--ink); border-radius: 6px; background: var(--paper); font: 500 14px var(--mono); letter-spacing: .06em; }
+.note-cell { max-width: 280px; overflow: hidden; text-overflow: ellipsis; }
+button.pill { cursor: pointer; }
+.codes { min-height: 0; font: 500 16px/1.6 var(--mono); letter-spacing: .08em; resize: vertical; }

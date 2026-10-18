@@ -17,7 +17,7 @@ async function call(path, init) {
   return body;
 }
 
-export function createSession({ strip, shots, layout, frame, filter, template, pkg, prints }) {
+export function createSession({ strip, shots, layout, frame, filter, template, pkg, prints, order }) {
   const fd = new FormData();
   fd.append('strip', strip, 'strip.jpg');
   shots.forEach((b, i) => fd.append('shots', b, `shot-${i + 1}.jpg`));
@@ -29,8 +29,16 @@ export function createSession({ strip, shots, layout, frame, filter, template, p
   fd.append('filter', filter);
   if (pkg != null) fd.append('package', String(pkg));
   if (prints != null) fd.append('prints', String(prints));
+  if (order) fd.append('order', order);
   return call('/api/sessions', { method: 'POST', body: fd });
 }
+
+const json = (body) => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
+/** Freeze the guest's choice into an order; paid at once when a voucher (or nothing) covers it. */
+export const createOrder = (body) => call('/api/orders', json(body));
+export const getOrder = (id) => call(`/api/orders/${encodeURIComponent(id)}`, { cache: 'no-store' });
+export const cancelOrder = (id) => call(`/api/orders/${encodeURIComponent(id)}/cancel`, { method: 'POST' });
 
 /** Frames and price packages the dashboard has switched on. */
 export const getBooth = () => call('/api/booth');
