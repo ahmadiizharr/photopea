@@ -144,9 +144,10 @@ body[data-step='done'] [data-screen='done'] { display: flex; animation: enter .3
   border-radius: 18px;
   transition: transform .15s var(--spring), box-shadow .15s, background .15s;
 }
-.fc-thumb { display: grid; place-items: center; height: 180px; padding: 12px; border-radius: 10px; background: var(--paper); }
-.fc-thumb svg, .fc-thumb img { width: auto; max-width: 100%; height: auto; max-height: 100%; border: 1.5px solid var(--ink); background: #fff; box-shadow: 3px 3px 0 rgb(22 17 14 / .2); }
-.fc-thumb svg { height: 100%; }
+/* sizes in px: a % max-height inside a grid cell has nothing to resolve against and is ignored */
+.fc-thumb { --thumb: 180px; display: grid; place-items: center; height: var(--thumb); padding: 12px; border-radius: 10px; background: var(--paper); }
+.fc-thumb svg, .fc-thumb img { width: auto; max-width: 100%; height: auto; max-height: calc(var(--thumb) - 24px); border: 1.5px solid var(--ink); background: #fff; box-shadow: 3px 3px 0 rgb(22 17 14 / .2); }
+.fc-thumb svg { height: calc(var(--thumb) - 24px); }
 .fc-body b { display: block; font: 700 16px/1.25 var(--body); }
 .fc-body small { font: 500 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; opacity: .7; }
 .frame-card:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--ink); }
@@ -428,7 +429,7 @@ kbd {
   .step-bar { gap: 10px; padding: 12px 14px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
   .btn-lg { min-height: 52px; padding: 12px 22px; font-size: 17px; }
   .frame-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-  .fc-thumb { height: 140px; }
+  .fc-thumb { --thumb: 140px; }
   .pick-text small { display: none; }
   .review, .download { grid-template-columns: 1fr; gap: 26px; justify-items: center; }
   #final, .strip-copy { max-height: 62dvh; }
