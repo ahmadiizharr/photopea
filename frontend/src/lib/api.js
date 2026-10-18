@@ -17,15 +17,23 @@ async function call(path, init) {
   return body;
 }
 
-export function createSession({ strip, shots, layout, frame, filter }) {
+export function createSession({ strip, shots, layout, frame, filter, template, pkg, prints }) {
   const fd = new FormData();
   fd.append('strip', strip, 'strip.jpg');
   shots.forEach((b, i) => fd.append('shots', b, `shot-${i + 1}.jpg`));
-  fd.append('layout', layout);
-  fd.append('frame', frame);
+  if (template) fd.append('template', template);
+  else {
+    fd.append('layout', layout);
+    fd.append('frame', frame);
+  }
   fd.append('filter', filter);
+  if (pkg != null) fd.append('package', String(pkg));
+  if (prints != null) fd.append('prints', String(prints));
   return call('/api/sessions', { method: 'POST', body: fd });
 }
+
+/** Frames and price packages the dashboard has switched on. */
+export const getBooth = () => call('/api/booth');
 
 export const getSession = (code) => call(`/api/sessions/${encodeURIComponent(code)}`);
 

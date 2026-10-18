@@ -46,7 +46,8 @@ function placeholder(ctx, s, i, k) {
  * @param {(HTMLCanvasElement|null)[]} shots  already cropped to the slot aspect + filtered
  * @param {{caption?: string, date: string, scale?: number}} opts
  */
-export function compose(canvas, layout, frame, shots, { caption, date, scale = 1 }) {
+export function compose(canvas, layout, frame, shots, { caption, date, scale = 1, overlay = null }) {
+  if (layout.template) return composeFrame(canvas, layout, shots, scale, overlay);
   const k = scale;
   const W = Math.round(layout.w * k);
   const H = Math.round(layout.h * k);
@@ -112,6 +113,39 @@ export function compose(canvas, layout, frame, shots, { caption, date, scale = 1
   ctx.strokeStyle = INK;
   ctx.stroke();
 
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  return canvas;
+}
+
+/** Draw `img` into slot `s`, cropped to the slot's aspect (a shot may fill holes of different shapes). */
+function drawCover(ctx, img, s) {
+  const iw = img.width;
+  const ih = img.height;
+  const a = s.w / s.h;
+  let sw = iw, sh = ih, sx = 0, sy = 0;
+  if (iw / ih > a) { sw = ih * a; sx = (iw - sw) / 2; } else { sh = iw / a; sy = (ih - sh) / 2; }
+  ctx.drawImage(img, sx, sy, sw, sh, s.x, s.y, s.w, s.h);
+}
+
+/**
+ * Uploaded frame (dashboard): photos go into every hole by photo number, the PNG goes on top.
+ * `layout.holes` are all holes; `overlay` is the loaded frame image (skipped until it loads).
+ */
+function composeFrame(canvas, layout, shots, k, overlay) {
+  const W = Math.round(layout.w * k);
+  const H = Math.round(layout.h * k);
+  if (canvas.width !== W) canvas.width = W;
+  if (canvas.height !== H) canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(k, 0, 0, k, 0, 0);
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, layout.w, layout.h);
+  for (const s of layout.holes) {
+    const shot = shots[s.photo - 1];
+    if (shot) drawCover(ctx, shot, s);
+    else placeholder(ctx, s, s.photo - 1, 1);
+  }
+  if (overlay?.complete && overlay.naturalWidth) ctx.drawImage(overlay, 0, 0, layout.w, layout.h);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   return canvas;
 }

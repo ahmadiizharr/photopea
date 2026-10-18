@@ -27,6 +27,14 @@ class Session:
     has_gif: bool
     created_at: datetime
     expires_at: datetime
+    template: str | None = None  # uploaded frame id, when the strip used one
+    package_id: int | None = None
+    prints: int | None = None
+    total: int | None = None
+
+
+# Added after the first release; created on start-up when missing.
+EXTRA_COLUMNS = {"template": "TEXT", "package_id": "INTEGER", "prints": "INTEGER", "total": "INTEGER"}
 
 
 class SessionStore:
@@ -51,6 +59,10 @@ class SessionStore:
             )"""
         )
         self._db.execute("CREATE INDEX IF NOT EXISTS sessions_expires ON sessions(expires_at)")
+        have = {r[1] for r in self._db.execute("PRAGMA table_info(sessions)")}
+        for col, kind in EXTRA_COLUMNS.items():
+            if col not in have:
+                self._db.execute(f"ALTER TABLE sessions ADD COLUMN {col} {kind}")
         self._db.commit()
 
     def reserve_code(self) -> str:
@@ -67,13 +79,18 @@ class SessionStore:
     def release(self, code: str) -> None:
         shutil.rmtree(self.media_dir / code, ignore_errors=True)
 
-    def add(self, code: str, layout: str, frame: str, filter_: str, n_shots: int, has_gif: bool) -> Session:
+    def add(
+        self, code: str, layout: str, frame: str, filter_: str, n_shots: int, has_gif: bool,
+        template: str | None = None, package_id: int | None = None, prints: int | None = None, total: int | None = None,
+    ) -> Session:
         now = datetime.now(timezone.utc).replace(microsecond=0)
-        s = Session(code, layout, frame, filter_, n_shots, has_gif, now, now + self.retention)
+        s = Session(code, layout, frame, filter_, n_shots, has_gif, now, now + self.retention, template, package_id, prints, total)
         with self._lock:
             self._db.execute(
-                "INSERT INTO sessions VALUES (?,?,?,?,?,?,?,?)",
-                (code, layout, frame, filter_, n_shots, int(has_gif), s.created_at.isoformat(), s.expires_at.isoformat()),
+                """INSERT INTO sessions (code, layout, frame, filter, n_shots, has_gif, created_at, expires_at,
+                   template, package_id, prints, total) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (code, layout, frame, filter_, n_shots, int(has_gif), s.created_at.isoformat(), s.expires_at.isoformat(),
+                 template, package_id, prints, total),
             )
             self._db.commit()
         return s
@@ -82,12 +99,17 @@ class SessionStore:
         if not is_code(code):
             return None
         with self._lock:
-            row = self._db.execute("SELECT * FROM sessions WHERE code = ?", (code,)).fetchone()
+            row = self._db.execute(
+                """SELECT code, layout, frame, filter, n_shots, has_gif, created_at, expires_at,
+                   template, package_id, prints, total FROM sessions WHERE code = ?""",
+                (code,),
+            ).fetchone()
         if row is None:
             return None
         s = Session(
             code=row[0], layout=row[1], frame=row[2], filter=row[3], n_shots=row[4], has_gif=bool(row[5]),
             created_at=datetime.fromisoformat(row[6]), expires_at=datetime.fromisoformat(row[7]),
+            template=row[8], package_id=row[9], prints=row[10], total=row[11],
         )
         if s.expires_at <= datetime.now(timezone.utc):
             return None

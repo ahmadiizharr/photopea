@@ -29,7 +29,7 @@ async function run() {
 
   const made = new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(s.created_at));
   const layout = byId(layouts, s.layout);
-  $('#meta').textContent = `Sesi ${s.code} · ${made} · ${layout.name}`;
+  $('#meta').textContent = `Sesi ${s.code} · ${made} · ${s.layout_name ?? layout.name}`;
   document.title = `Fotomu (${s.code}) — jepret`;
 
   const strip = $('#strip');

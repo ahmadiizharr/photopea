@@ -74,11 +74,16 @@
     <aside class="panel">
       <!-- setup -->
       <div class="pane" data-pane="setup">
-        <fieldset class="group">
-          <legend class="mono">Layout</legend>
-          <div class="layout-opts" id="opt-layout" role="radiogroup" aria-label="Layout"></div>
+        <fieldset class="group" id="pkg-group" hidden>
+          <legend class="mono">Paket</legend>
+          <div class="pkg-opts" id="opt-package" role="radiogroup" aria-label="Paket"></div>
+          <p class="pkg-hint">Bayar ke kasir dulu, lalu tekan MULAI.</p>
         </fieldset>
         <fieldset class="group">
+          <legend class="mono">Layout &amp; frame</legend>
+          <div class="layout-opts" id="opt-layout" role="radiogroup" aria-label="Layout dan frame"></div>
+        </fieldset>
+        <fieldset class="group builtin-only">
           <legend class="mono">Warna kertas</legend>
           <div class="chips" id="opt-frame" role="radiogroup" aria-label="Warna kertas"></div>
         </fieldset>
@@ -86,7 +91,7 @@
           <legend class="mono">Filter</legend>
           <div class="chips" id="opt-filter" role="radiogroup" aria-label="Filter"></div>
         </fieldset>
-        <div class="group">
+        <div class="group builtin-only">
           <label class="mono" for="opt-caption">Teks di bawah foto</label>
           <input class="field" id="opt-caption" maxlength="28" placeholder="jepret" autocomplete="off" />
         </div>
@@ -103,6 +108,17 @@
       <div class="pane" data-pane="review">
         <p class="mono pane-label">Cek dulu. Ada yang mau diulang?</p>
         <ol class="thumbs" id="thumbs"></ol>
+        <div class="prints" id="prints-box" hidden>
+          <span class="prints-label">Cetak</span>
+          <div class="stepper">
+            <button type="button" class="step" id="prints-minus" aria-label="Kurangi cetak">−</button>
+            <output id="prints-n" aria-live="polite">1</output>
+            <button type="button" class="step" id="prints-plus" aria-label="Tambah cetak">+</button>
+          </div>
+          <span class="prints-unit">lembar</span>
+          <p class="prints-note" id="prints-note"></p>
+        </div>
+        <p class="total" id="total" hidden></p>
         <div class="pane-actions">
           <button class="btn btn-pink" id="btn-save" type="button">Simpan &amp; ambil QR <span class="arr" aria-hidden="true">→</span></button>
           <button class="btn btn-ghost btn-sm" id="btn-redo" type="button">Ulangi semua</button>
@@ -134,6 +150,7 @@
             <a class="btn btn-ghost btn-sm" id="dl-local" href="#" download="jepret-strip.jpg">Unduh langsung</a>
           </div>
         </div>
+        <button class="btn btn-pink print-btn" id="btn-print" type="button" hidden>Cetak</button>
         <button class="btn btn-ink new-session" id="btn-new" type="button">Sesi baru</button>
         <div class="auto-reset" id="auto-reset" hidden><span id="auto-reset-bar"></span><p class="mono" id="auto-reset-text"></p></div>
       </div>
@@ -165,12 +182,15 @@
       </label>
       <label class="row check"><input type="checkbox" id="set-mirror" /> <span>Cermin (seperti kaca)</span></label>
       <label class="row check"><input type="checkbox" id="set-sound" /> <span>Suara hitung mundur &amp; jepret</span></label>
-      <p class="note">Tersimpan di browser ini saja. Untuk acara: pasang webcam, pilih kameranya di sini, nyalakan reset otomatis, lalu tekan layar penuh.</p>
+      <label class="row check"><input type="checkbox" id="set-printer" /> <span>Booth punya printer (tampilkan tombol Cetak)</span></label>
+      <label class="row check"><input type="checkbox" id="set-autoprint" /> <span>Cetak otomatis setelah disimpan</span></label>
+      <p class="note">Tersimpan di browser ini saja. Untuk acara: pasang webcam, pilih kameranya di sini, nyalakan reset otomatis, lalu tekan layar penuh. Supaya cetak tanpa dialog, buka Chrome dengan <code>--kiosk --kiosk-printing</code> dan jadikan printer foto sebagai printer bawaan.</p>
       <button class="btn btn-ink" value="close">Selesai</button>
     </form>
   </dialog>
 
   <video class="cam-src" id="video" playsinline muted autoplay aria-hidden="true"></video>
+  <div id="print-root" aria-hidden="true"></div>
   <script type="module" src="/src/booth/main.js"></script>
 </body>
 </html>

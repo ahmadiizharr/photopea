@@ -11,6 +11,8 @@ StateDirectory=photobox
 Environment=PHOTOBOX_DATA_DIR=/var/lib/photobox
 Environment=PHOTOBOX_PUBLIC_URL=https://work.mangaisekai.com
 Environment=PHOTOBOX_RETENTION_DAYS=7
+# Akun superadmin dashboard (PHOTOBOX_ADMIN_USER/HASH), dibuat dengan: python -m app.cli set-admin
+EnvironmentFile=-/etc/photobox/admin.env
 WorkingDirectory=/srv/photobox/backend
 ExecStart=/srv/photobox/backend/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8090 --proxy-headers --forwarded-allow-ips 127.0.0.1 --no-server-header
 Restart=always

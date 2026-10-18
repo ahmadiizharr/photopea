@@ -14,6 +14,9 @@ from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import media
+from .admin import create_router
+from .auth import Auth, load_secret
+from .catalog import Catalog
 from .config import Settings
 from .store import Session, SessionStore
 
@@ -28,11 +31,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     layouts = {l["id"]: l for l in catalog["layouts"]}
     frames = {f["id"] for f in catalog["frames"]}
     filters = {f["id"] for f in catalog["filters"]}
+    formats = {f["id"]: f for f in catalog["formats"]}
 
     @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI):
         store = SessionStore(settings.db_path, settings.media_dir, timedelta(days=settings.retention_days))
         app.state.store = store
+        app.state.catalog = Catalog(settings.db_path, settings.frames_dir)
+        app.state.auth = Auth(load_secret(settings.secret_path), settings.admin_user, settings.admin_hash, settings.admin_session_days)
 
         async def janitor():
             while True:
@@ -45,15 +51,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         yield
         task.cancel()
         store.close()
+        app.state.catalog.close()
 
     app = FastAPI(title="photobox", lifespan=lifespan, docs_url="/api/docs", openapi_url="/api/openapi.json", redoc_url=None)
 
-    def public(s: Session) -> dict:
+    def layout_name(request: Request, s: Session) -> str:
+        if s.template:
+            f = request.app.state.catalog.frame(s.template)
+            if f:
+                return f["name"]
+            return formats[s.layout]["name"] if s.layout in formats else "Frame"
+        return layouts[s.layout]["name"] if s.layout in layouts else s.layout
+
+    def public(s: Session, request: Request) -> dict:
         base = f"/media/{s.code}"
         return {
             "code": s.code,
             "url": f"{settings.public_base_url}/s/{s.code}",
             "layout": s.layout,
+            "layout_name": layout_name(request, s),
+            "template": s.template,
+            "prints": s.prints,
             "frame": s.frame,
             "filter": s.filter,
             "created_at": s.created_at.isoformat(),
@@ -91,19 +109,40 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         request: Request,
         strip: Annotated[UploadFile, File(description="Hasil komposisi akhir (JPEG/PNG/WEBP)")],
         shots: Annotated[list[UploadFile], File(description="Foto mentah per jepretan, urut")],
-        layout: Annotated[str, Form()],
-        frame: Annotated[str, Form()],
+        layout: Annotated[str | None, Form(description="Layout bawaan; diabaikan kalau `template` diisi")] = None,
+        frame: Annotated[str | None, Form(description="Warna kertas layout bawaan")] = None,
         filter: Annotated[str, Form()] = "normal",
+        template: Annotated[str | None, Form(description="ID frame upload dari dashboard")] = None,
+        package: Annotated[int | None, Form(description="ID paket harga yang dipilih tamu")] = None,
+        prints: Annotated[int | None, Form(ge=0, le=20, description="Jumlah lembar yang dicetak")] = None,
     ):
-        spec = layouts.get(layout)
-        if spec is None:
-            raise HTTPException(422, "layout tidak dikenal")
-        if frame not in frames:
-            raise HTTPException(422, "frame tidak dikenal")
+        cat: Catalog = request.app.state.catalog
+        if template:
+            tpl = cat.frame(template)
+            if tpl is None or not cat.is_live(template):
+                raise HTTPException(422, "frame tidak tersedia")
+            layout, frame, max_shots = tpl["format"], tpl["id"], tpl["n_photos"]
+        else:
+            spec = layouts.get(layout or "")
+            if spec is None:
+                raise HTTPException(422, "layout tidak dikenal")
+            if frame not in frames:
+                raise HTTPException(422, "frame tidak dikenal")
+            max_shots = spec["shots"]
         if filter not in filters:
             raise HTTPException(422, "filter tidak dikenal")
-        if not 1 <= len(shots) <= spec["shots"]:
-            raise HTTPException(422, f"layout {layout} butuh 1–{spec['shots']} foto")
+        if not 1 <= len(shots) <= max_shots:
+            raise HTTPException(422, f"layout {layout} butuh 1–{max_shots} foto")
+        total = None
+        if package is not None:
+            pk = cat.package(package)
+            if pk is None or not pk["active"]:
+                raise HTTPException(422, "paket tidak tersedia")
+            if prints is None:
+                prints = pk["prints_included"]
+            if prints > pk["max_prints"]:
+                raise HTTPException(422, f"paket {pk['name']} maksimal {pk['max_prints']} cetak")
+            total = pk["price"] + max(0, prints - pk["prints_included"]) * pk["extra_print_price"]
 
         strip_bytes = await read_limited(strip)
         shot_bytes = [await read_limited(f) for f in shots]
@@ -130,12 +169,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except BaseException:
             store.release(code)
             raise
-        s = store.add(code, layout, frame, filter, len(shots), has_gif)
-        return public(s)
+        s = store.add(code, layout, frame, filter, len(shots), has_gif, template or None, package, prints, total)
+        return {**public(s, request), "total": total}
 
     @app.get("/api/sessions/{code}")
     def get_session(request: Request, code: str):
-        return public(lookup(request, code))
+        return public(lookup(request, code), request)
 
     @app.get("/api/sessions/{code}/qr.svg")
     def qr(request: Request, code: str):
@@ -158,6 +197,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if dl:
             return FileResponse(path, headers=headers, filename=f"{settings.brand}-{s.code}-{name}")
         return FileResponse(path, headers=headers)
+
+    app.include_router(create_router(catalog, settings.max_frame_bytes))
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException):

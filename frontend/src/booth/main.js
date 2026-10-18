@@ -1,8 +1,9 @@
-import { layouts, frames, filters, byId, stamp } from '../lib/catalog.js';
-import { createSession, formatExpiry } from '../lib/api.js';
+import { layouts, frames, filters, formats, byId, stamp } from '../lib/catalog.js';
+import { createSession, formatExpiry, getBooth } from '../lib/api.js';
 import { applyFilter } from './filters.js';
 import { compose, toBlob } from './compose.js';
 import { openCamera, closeCamera, listCameras, describe, grab } from './camera.js';
+import { printStrip } from './print.js';
 import * as sound from './sound.js';
 
 const $ = (s) => document.querySelector(s);
@@ -12,7 +13,10 @@ const PREVIEW_LONG = 640; // px, live preview is filtered per frame so keep it m
 
 // ---------------- persisted settings ----------------
 const KEY = 'jepret.booth';
-const defaults = { layout: 'strip4', frame: 'pink', filter: 'normal', caption: '', countdown: 3, reset: 0, mirror: true, sound: true, camera: '' };
+const defaults = {
+  layout: 'strip4', frame: 'pink', filter: 'normal', caption: '', countdown: 3, reset: 0, mirror: true, sound: true, camera: '',
+  template: '', package: null, printer: false, autoPrint: false,
+};
 const cfg = { ...defaults, ...load() };
 function load() {
   try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; }
@@ -29,8 +33,42 @@ const state = {
   stripBlob: null,
   localUrl: null,
   camOk: false,
+  templates: [], // uploaded frames switched on in the dashboard
+  packages: [], // price packages switched on in the dashboard
+  prints: 1,
 };
-const layout = () => byId(layouts, cfg.layout);
+
+// ---------------- design: built-in layout or uploaded frame ----------------
+const fmtById = Object.fromEntries(formats.map((f) => [f.id, f]));
+const money = new Intl.NumberFormat('id-ID');
+const rupiah = (n) => `Rp ${money.format(n)}`;
+
+/** An uploaded frame shaped like a built-in layout: one capture slot per photo number, all holes in `holes`. */
+function frameLayout(t) {
+  const first = [];
+  for (const s of t.slots) first[s.photo - 1] ??= s;
+  return { id: t.format, name: t.name, w: t.w, h: t.h, shots: t.n_photos, slots: first, holes: t.slots, template: t, print: fmtById[t.format]?.print };
+}
+const currentTemplate = () => (cfg.template && state.templates.find((t) => t.id === cfg.template)) || null;
+const layout = () => {
+  const t = currentTemplate();
+  return t ? frameLayout(t) : byId(layouts, cfg.layout);
+};
+const currentPackage = () => state.packages.find((p) => p.id === cfg.package) ?? null;
+
+const overlays = new Map();
+function overlayFor(l) {
+  if (!l.template) return null;
+  let img = overlays.get(l.template.id);
+  if (!img) {
+    img = new Image();
+    img.decoding = 'async';
+    img.src = l.template.url;
+    img.addEventListener('load', () => { if (state.step === 'shoot') renderMini(); });
+    overlays.set(l.template.id, img);
+  }
+  return img;
+}
 const frame = () => byId(frames, cfg.frame);
 const aspectOf = (i = 0) => {
   const s = layout().slots[i] ?? layout().slots[0];
@@ -125,7 +163,7 @@ function radio(container, items, current, render, onPick) {
     render(b, it);
     b.addEventListener('click', () => {
       onPick(it.id);
-      for (const x of container.children) x.setAttribute('aria-checked', String(x.dataset.id === it.id));
+      for (const x of container.children) x.setAttribute('aria-checked', String(x.dataset.id === String(it.id)));
     });
     container.append(b);
   }
@@ -147,13 +185,59 @@ function layoutThumb(l, f) {
   return `<svg viewBox="0 0 ${l.w} ${l.h}" aria-hidden="true"><rect width="${l.w}" height="${l.h}" fill="${f.bg}"/>${slots}</svg>`;
 }
 
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
 function renderLayoutOpts() {
-  radio($('#opt-layout'), layouts, cfg.layout,
-    (b, l) => {
+  const items = [
+    ...layouts.map((l) => ({ id: `l:${l.id}`, l })),
+    ...state.templates.map((t) => ({ id: `t:${t.id}`, t })),
+  ];
+  const current = currentTemplate() ? `t:${cfg.template}` : `l:${cfg.layout}`;
+  radio($('#opt-layout'), items, current,
+    (b, it) => {
       b.className = 'layout-opt';
-      b.innerHTML = `${layoutThumb(l, frame())}<span><b>${l.name}</b><small>${l.shots} foto</small></span>`;
+      if (it.l) b.innerHTML = `${layoutThumb(it.l, frame())}<span><b>${it.l.name}</b><small>${it.l.shots} foto</small></span>`;
+      else b.innerHTML = `<img src="${it.t.preview}" alt="" /><span><b>${esc(it.t.name)}</b><small>${it.t.n_photos} foto · ${esc(fmtById[it.t.format]?.paper ?? '')}</small></span>`;
     },
-    (id) => { cfg.layout = id; save(); });
+    (id) => {
+      if (id.startsWith('t:')) cfg.template = id.slice(2);
+      else { cfg.template = ''; cfg.layout = id.slice(2); }
+      save();
+      syncDesign();
+    });
+}
+
+function syncDesign() {
+  const l = layout();
+  document.body.dataset.design = l.template ? 'frame' : 'builtin';
+  overlayFor(l);
+}
+
+function renderPackages() {
+  const group = $('#pkg-group');
+  group.hidden = !state.packages.length;
+  if (!state.packages.length) { cfg.package = null; return; }
+  if (!currentPackage()) cfg.package = state.packages[0].id;
+  radio($('#opt-package'), state.packages, cfg.package,
+    (b, p) => {
+      b.className = 'pkg-opt';
+      const extra = p.max_prints > p.prints_included && p.extra_print_price
+        ? ` · tambah ${rupiah(p.extra_print_price)}/lembar, maks ${p.max_prints}` : '';
+      b.innerHTML = `<b>${esc(p.name)}</b><span class="pkg-price">${rupiah(p.price)}</span><small>${p.prints_included ? `${p.prints_included} cetak` : 'tanpa cetak'}${extra}</small>`;
+    },
+    (id) => { cfg.package = id; save(); });
+}
+
+async function loadBooth() {
+  try {
+    const b = await getBooth();
+    state.templates = b.frames;
+    state.packages = b.packages;
+  } catch { /* offline or old server: built-in layouts still work */ }
+  if (cfg.template && !currentTemplate()) cfg.template = '';
+  renderLayoutOpts();
+  renderPackages();
+  syncDesign();
 }
 
 radio($('#opt-frame'), frames, cfg.frame,
@@ -173,7 +257,10 @@ capIn.addEventListener('input', () => { cfg.caption = capIn.value; save(); });
 // ---------------- shooting ----------------
 const mini = $('#mini');
 const miniScale = () => Math.min(260 / layout().w, 520 / layout().h);
-const renderMini = () => compose(mini, layout(), frame(), state.shots, { caption: cfg.caption, date: stamp(), scale: miniScale() });
+const renderMini = () => {
+  const l = layout();
+  compose(mini, l, frame(), state.shots, { caption: cfg.caption, date: stamp(), scale: miniScale(), overlay: overlayFor(l) });
+};
 
 function showCount(n) {
   const el = $('#count');
@@ -195,6 +282,9 @@ async function shoot(indices, { retake = false } = {}) {
   const live = () => run === state.run;
   sound.unlock();
   setStep('shoot');
+  const overlay = overlayFor(layout());
+  if (overlay) await overlay.decode().catch(() => {});
+  if (!live()) return;
   const total = layout().shots;
   if (!retake) state.shots = Array(total).fill(null);
   renderMini();
@@ -236,9 +326,47 @@ function cancelShoot() {
 // ---------------- review ----------------
 const finalCanvas = $('#final');
 
+// ---------------- prints + price ----------------
+function printLimits() {
+  const p = currentPackage();
+  if (p) return { min: 0, max: p.max_prints, start: p.prints_included };
+  return { min: 0, max: 10, start: 1 };
+}
+
+function renderPrints() {
+  const p = currentPackage();
+  const show = Boolean(p) || cfg.printer;
+  $('#prints-box').hidden = !show;
+  const { min, max } = printLimits();
+  state.prints = Math.min(max, Math.max(min, state.prints));
+  $('#prints-n').textContent = state.prints;
+  $('#prints-minus').disabled = state.prints <= min;
+  $('#prints-plus').disabled = state.prints >= max;
+  const rule = layout().print;
+  const per = rule?.per_page > 1 ? ` · 1 lembar = ${rule.per_page} ${layout().template ? 'cetakan' : 'strip'}` : '';
+  $('#prints-note').textContent = p
+    ? `${p.prints_included} lembar termasuk paket${p.extra_print_price ? `, tambahan ${rupiah(p.extra_print_price)}/lembar` : ''}${per}`
+    : `${rule ? `${rule.page[0]}×${rule.page[1]} inci` : ''}${per}`;
+  const total = $('#total');
+  total.hidden = !p;
+  if (p) {
+    const extra = Math.max(0, state.prints - p.prints_included) * p.extra_print_price;
+    total.innerHTML = `Total ${rupiah(p.price + extra)}<span>${esc(p.name)}${extra ? ` + ${state.prints - p.prints_included} cetak tambahan` : ''} · bayar ke kasir</span>`;
+  }
+}
+$('#prints-minus').addEventListener('click', () => { state.prints--; renderPrints(); });
+$('#prints-plus').addEventListener('click', () => { state.prints++; renderPrints(); });
+
+function doPrint() {
+  printStrip(finalCanvas, layout().print, state.prints);
+}
+
 function review() {
   setStep('review');
-  compose(finalCanvas, layout(), frame(), state.shots, { caption: cfg.caption, date: stamp() });
+  const l = layout();
+  compose(finalCanvas, l, frame(), state.shots, { caption: cfg.caption, date: stamp(), overlay: overlayFor(l) });
+  state.prints = printLimits().start;
+  renderPrints();
   const list = $('#thumbs');
   list.innerHTML = '';
   state.shots.forEach((shot, i) => {
@@ -274,7 +402,11 @@ async function saveSession() {
     state.localUrl = URL.createObjectURL(state.stripBlob);
     $('#dl-local').href = state.localUrl;
     const shots = await Promise.all(state.shots.map((c) => toBlob(c, 0.9)));
-    const s = await createSession({ strip: state.stripBlob, shots, layout: cfg.layout, frame: cfg.frame, filter: cfg.filter });
+    const pkg = currentPackage();
+    const s = await createSession({
+      strip: state.stripBlob, shots, layout: cfg.layout, frame: cfg.frame, filter: cfg.filter,
+      template: layout().template?.id, pkg: pkg?.id, prints: pkg || cfg.printer ? state.prints : null,
+    });
     $('#qr').src = s.files.qr;
     $('#code').textContent = s.code;
     $('#host').textContent = location.host;
@@ -290,6 +422,11 @@ async function saveSession() {
   } finally {
     $('#saving').hidden = true;
     $('#btn-new').hidden = false;
+    const canPrint = cfg.printer && state.prints > 0;
+    const pb = $('#btn-print');
+    pb.hidden = !canPrint;
+    pb.textContent = `Cetak ${state.prints} lembar`;
+    if (canPrint && cfg.autoPrint) doPrint();
   }
 }
 
@@ -315,6 +452,7 @@ function newSession() {
   state.run++;
   state.shots = [];
   state.stripBlob = null;
+  $('#btn-print').hidden = true;
   $('#shot-tag').textContent = 'SIAP';
   setStep('setup');
   $('#btn-start').focus({ preventScroll: true });
@@ -345,12 +483,16 @@ $('#btn-settings').addEventListener('click', () => {
   $('#set-reset').value = String(cfg.reset);
   $('#set-mirror').checked = cfg.mirror;
   $('#set-sound').checked = cfg.sound;
+  $('#set-printer').checked = cfg.printer;
+  $('#set-autoprint').checked = cfg.autoPrint;
   dlg.showModal();
 });
 $('#set-countdown').addEventListener('change', (e) => { cfg.countdown = Number(e.target.value); save(); });
 $('#set-reset').addEventListener('change', (e) => { cfg.reset = Number(e.target.value); save(); });
 $('#set-mirror').addEventListener('change', (e) => { cfg.mirror = e.target.checked; save(); });
 $('#set-sound').addEventListener('change', (e) => { cfg.sound = e.target.checked; save(); });
+$('#set-printer').addEventListener('change', (e) => { cfg.printer = e.target.checked; save(); });
+$('#set-autoprint').addEventListener('change', (e) => { cfg.autoPrint = e.target.checked; save(); });
 $('#set-camera').addEventListener('change', (e) => { cfg.camera = e.target.value; save(); startCamera(); });
 dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
 
@@ -375,6 +517,7 @@ $('#btn-redo').addEventListener('click', () => (state.camOk ? shoot([...Array(la
 $('#btn-save').addEventListener('click', saveSession);
 $('#btn-retry-upload').addEventListener('click', saveSession);
 $('#btn-new').addEventListener('click', newSession);
+$('#btn-print').addEventListener('click', doPrint);
 $('#cam-retry').addEventListener('click', startCamera);
 $('.panel').addEventListener('pointerdown', () => { if (state.step === 'done' && cfg.reset) armAutoReset(); });
 
@@ -395,6 +538,8 @@ document.addEventListener('keydown', (e) => {
 });
 
 setStep('setup');
+syncDesign();
+loadBooth();
 startCamera().then(keepAwake);
 requestAnimationFrame(drawPreview);
 // make sure the canvas fonts exist before the first strip is drawn

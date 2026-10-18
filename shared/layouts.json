@@ -13,7 +13,8 @@
         { "x": 40, "y": 860, "w": 520, "h": 390 },
         { "x": 40, "y": 1270, "w": 520, "h": 390 }
       ],
-      "caption": { "x": 40, "y": 1660, "w": 520, "h": 140 }
+      "caption": { "x": 40, "y": 1660, "w": 520, "h": 140 },
+      "print": { "page": [4, 6], "per_page": 2 }
     },
     {
       "id": "strip3",
@@ -27,7 +28,8 @@
         { "x": 40, "y": 524, "w": 520, "h": 460 },
         { "x": 40, "y": 1008, "w": 520, "h": 460 }
       ],
-      "caption": { "x": 40, "y": 1468, "w": 520, "h": 332 }
+      "caption": { "x": 40, "y": 1468, "w": 520, "h": 332 },
+      "print": { "page": [4, 6], "per_page": 2 }
     },
     {
       "id": "grid4",
@@ -42,7 +44,8 @@
         { "x": 40, "y": 680, "w": 540, "h": 600 },
         { "x": 620, "y": 680, "w": 540, "h": 600 }
       ],
-      "caption": { "x": 40, "y": 1280, "w": 1120, "h": 220 }
+      "caption": { "x": 40, "y": 1280, "w": 1120, "h": 220 },
+      "print": { "page": [4, 6], "per_page": 1 }
     },
     {
       "id": "polaroid",
@@ -52,7 +55,8 @@
       "w": 1080,
       "h": 1320,
       "slots": [{ "x": 60, "y": 60, "w": 960, "h": 960 }],
-      "caption": { "x": 60, "y": 1020, "w": 960, "h": 300 }
+      "caption": { "x": 60, "y": 1020, "w": 960, "h": 300 },
+      "print": { "page": [4, 6], "per_page": 1 }
     }
   ],
   "frames": [
@@ -68,5 +72,186 @@
     { "id": "hangat", "name": "Hangat" },
     { "id": "pudar", "name": "Film Pudar" },
     { "id": "riso", "name": "Riso" }
+  ],
+  "formats": [
+    {
+      "id": "4r-strip",
+      "name": "4R · 2 strip",
+      "paper": "4R",
+      "inch": [4, 6],
+      "w": 1200,
+      "h": 1800,
+      "cut_x": 600,
+      "print": { "page": [4, 6], "per_page": 1 },
+      "note": "Dua strip 2×6 inci berdampingan, dipotong di tengah. Format photobox paling umum.",
+      "presets": [
+        {
+          "id": "4-kembar",
+          "name": "4 foto · strip kiri & kanan kembar",
+          "slots": [
+            { "x": 40, "y": 40, "w": 520, "h": 390, "photo": 1 },
+            { "x": 40, "y": 450, "w": 520, "h": 390, "photo": 2 },
+            { "x": 40, "y": 860, "w": 520, "h": 390, "photo": 3 },
+            { "x": 40, "y": 1270, "w": 520, "h": 390, "photo": 4 },
+            { "x": 640, "y": 40, "w": 520, "h": 390, "photo": 1 },
+            { "x": 640, "y": 450, "w": 520, "h": 390, "photo": 2 },
+            { "x": 640, "y": 860, "w": 520, "h": 390, "photo": 3 },
+            { "x": 640, "y": 1270, "w": 520, "h": 390, "photo": 4 }
+          ]
+        },
+        {
+          "id": "3-kembar",
+          "name": "3 foto · strip kiri & kanan kembar",
+          "slots": [
+            { "x": 40, "y": 40, "w": 520, "h": 460, "photo": 1 },
+            { "x": 40, "y": 524, "w": 520, "h": 460, "photo": 2 },
+            { "x": 40, "y": 1008, "w": 520, "h": 460, "photo": 3 },
+            { "x": 640, "y": 40, "w": 520, "h": 460, "photo": 1 },
+            { "x": 640, "y": 524, "w": 520, "h": 460, "photo": 2 },
+            { "x": 640, "y": 1008, "w": 520, "h": 460, "photo": 3 }
+          ]
+        },
+        {
+          "id": "6-beda",
+          "name": "6 foto · kiri 1–3, kanan 4–6",
+          "slots": [
+            { "x": 40, "y": 40, "w": 520, "h": 460, "photo": 1 },
+            { "x": 40, "y": 524, "w": 520, "h": 460, "photo": 2 },
+            { "x": 40, "y": 1008, "w": 520, "h": 460, "photo": 3 },
+            { "x": 640, "y": 40, "w": 520, "h": 460, "photo": 4 },
+            { "x": 640, "y": 524, "w": 520, "h": 460, "photo": 5 },
+            { "x": 640, "y": 1008, "w": 520, "h": 460, "photo": 6 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "4r",
+      "name": "4R penuh",
+      "paper": "4R",
+      "inch": [4, 6],
+      "w": 1200,
+      "h": 1800,
+      "cut_x": null,
+      "print": { "page": [4, 6], "per_page": 1 },
+      "note": "Satu lembar 4×6 inci utuh: grid, kolase, atau satu foto besar.",
+      "presets": [
+        {
+          "id": "grid-2x2",
+          "name": "Grid 2×2 · 4 foto",
+          "slots": [
+            { "x": 50, "y": 50, "w": 535, "h": 700, "photo": 1 },
+            { "x": 615, "y": 50, "w": 535, "h": 700, "photo": 2 },
+            { "x": 50, "y": 780, "w": 535, "h": 700, "photo": 3 },
+            { "x": 615, "y": 780, "w": 535, "h": 700, "photo": 4 }
+          ]
+        },
+        {
+          "id": "grid-2x3",
+          "name": "Grid 2×3 · 6 foto",
+          "slots": [
+            { "x": 50, "y": 50, "w": 535, "h": 440, "photo": 1 },
+            { "x": 615, "y": 50, "w": 535, "h": 440, "photo": 2 },
+            { "x": 50, "y": 520, "w": 535, "h": 440, "photo": 3 },
+            { "x": 615, "y": 520, "w": 535, "h": 440, "photo": 4 },
+            { "x": 50, "y": 990, "w": 535, "h": 440, "photo": 5 },
+            { "x": 615, "y": 990, "w": 535, "h": 440, "photo": 6 }
+          ]
+        },
+        {
+          "id": "tunggal",
+          "name": "1 foto besar",
+          "slots": [
+            { "x": 50, "y": 50, "w": 1100, "h": 1300, "photo": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "5r",
+      "name": "5R",
+      "paper": "5R",
+      "inch": [5, 7],
+      "w": 1500,
+      "h": 2100,
+      "cut_x": null,
+      "print": { "page": [5, 7], "per_page": 1 },
+      "note": "Lembar 5×7 inci, lebih lega untuk grup dan grid besar.",
+      "presets": [
+        {
+          "id": "grid-2x2",
+          "name": "Grid 2×2 · 4 foto",
+          "slots": [
+            { "x": 60, "y": 60, "w": 670, "h": 800, "photo": 1 },
+            { "x": 770, "y": 60, "w": 670, "h": 800, "photo": 2 },
+            { "x": 60, "y": 900, "w": 670, "h": 800, "photo": 3 },
+            { "x": 770, "y": 900, "w": 670, "h": 800, "photo": 4 }
+          ]
+        },
+        {
+          "id": "tunggal",
+          "name": "1 foto besar",
+          "slots": [
+            { "x": 60, "y": 60, "w": 1380, "h": 1600, "photo": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "polaroid-5r",
+      "name": "Polaroid (5R ÷ 2)",
+      "paper": "5R",
+      "inch": [3.5, 5],
+      "w": 1050,
+      "h": 1500,
+      "cut_x": null,
+      "print": { "page": [7, 5], "per_page": 2 },
+      "note": "Setengah lembar 5R (3,5×5 inci). Dua polaroid dicetak berdampingan di satu 5R lalu dipotong.",
+      "presets": [
+        {
+          "id": "polaroid",
+          "name": "1 foto kotak, bingkai bawah tebal",
+          "slots": [
+            { "x": 60, "y": 60, "w": 930, "h": 930, "photo": 1 }
+          ]
+        },
+        {
+          "id": "2-foto",
+          "name": "2 foto bertumpuk",
+          "slots": [
+            { "x": 60, "y": 60, "w": 930, "h": 600, "photo": 1 },
+            { "x": 60, "y": 690, "w": 930, "h": 600, "photo": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2r",
+      "name": "2R",
+      "paper": "2R",
+      "inch": [2.5, 3.5],
+      "w": 750,
+      "h": 1050,
+      "cut_x": null,
+      "print": { "page": [2.5, 3.5], "per_page": 1 },
+      "note": "Kartu kecil 2,5×3,5 inci (ukuran dompet). Cocok untuk 1–2 foto.",
+      "presets": [
+        {
+          "id": "tunggal",
+          "name": "1 foto kotak",
+          "slots": [
+            { "x": 40, "y": 40, "w": 670, "h": 670, "photo": 1 }
+          ]
+        },
+        {
+          "id": "2-foto",
+          "name": "2 foto bertumpuk",
+          "slots": [
+            { "x": 40, "y": 40, "w": 670, "h": 420, "photo": 1 },
+            { "x": 40, "y": 490, "w": 670, "h": 420, "photo": 2 }
+          ]
+        }
+      ]
+    }
   ]
 }

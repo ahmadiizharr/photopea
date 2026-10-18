@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard — jepret</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="theme-color" content="#f4ecdd" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="/src/styles/base.css" />
+  <link rel="stylesheet" href="/src/styles/admin.css" />
+</head>
+<body data-auth="loading">
+  <header class="top">
+    <div class="wrap top-row">
+      <a class="logo" href="#/galeri" aria-label="jepret dashboard"><span class="logo-mark" aria-hidden="true"></span>jepret<span class="logo-tag mono">dashboard</span></a>
+      <nav class="tabs" aria-label="Menu dashboard">
+        <a href="#/galeri" data-tab="galeri">Galeri template</a>
+        <a href="#/paket" data-tab="paket">Paket harga</a>
+        <a href="#/panduan" data-tab="panduan">Panduan ukuran</a>
+      </nav>
+      <div class="who">
+        <span class="mono" id="who"></span>
+        <button class="btn btn-ghost btn-sm" id="logout" type="button">Keluar</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" id="view" aria-live="polite"></main>
+
+  <section class="login" id="login" aria-labelledby="login-title">
+    <form class="login-card" id="login-form">
+      <a class="logo" href="/"><span class="logo-mark" aria-hidden="true"></span>jepret</a>
+      <h1 id="login-title">Masuk dashboard</h1>
+      <label class="row"><span>Username</span><input class="field" name="username" autocomplete="username" required /></label>
+      <label class="row"><span>Password</span><input class="field" name="password" type="password" autocomplete="current-password" required /></label>
+      <p class="form-error" id="login-error" role="alert" hidden></p>
+      <button class="btn btn-pink" type="submit">Masuk <span class="arr" aria-hidden="true">→</span></button>
+    </form>
+  </section>
+
+  <dialog class="dlg" id="dlg" aria-labelledby="dlg-title">
+    <form method="dialog" id="dlg-form">
+      <h2 id="dlg-title"></h2>
+      <div id="dlg-body"></div>
+      <p class="form-error" id="dlg-error" role="alert" hidden></p>
+      <div class="dlg-actions">
+        <button class="btn btn-pink" id="dlg-ok" value="ok">Simpan</button>
+        <button class="btn btn-ghost btn-sm" value="cancel" formnovalidate>Batal</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script type="module" src="/src/admin/main.js"></script>
+</body>
+</html>
