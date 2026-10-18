@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Booth — jepret</title>
+  <meta name="description" content="Booth foto jepret: pilih layout, jepret, dan bawa pulang strip fotomu lewat QR." />
+  <meta name="theme-color" content="#f4ecdd" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="/src/styles/base.css" />
+  <link rel="stylesheet" href="/src/styles/booth.css" />
+</head>
+<body class="app" data-step="setup">
+  <header class="bar">
+    <a class="logo" href="/" aria-label="jepret, ke beranda"><span class="logo-mark" aria-hidden="true"></span>jepret</a>
+    <ol class="progress" aria-label="Tahap">
+      <li data-for="setup"><span>1</span>Atur</li>
+      <li data-for="shoot"><span>2</span>Jepret</li>
+      <li data-for="review"><span>3</span>Cek</li>
+      <li data-for="done"><span>4</span>Bawa pulang</li>
+    </ol>
+    <div class="bar-tools">
+      <button class="icon-btn" id="btn-full" type="button" aria-label="Layar penuh" title="Layar penuh (F)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
+      </button>
+      <button class="icon-btn" id="btn-settings" type="button" aria-label="Pengaturan" title="Pengaturan">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2.2" /><circle cx="10" cy="17" r="2.2" /></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ============ left: camera or finished strip ============ -->
+    <section class="view" aria-label="Kamera">
+      <div class="cab">
+        <div class="lensbar" aria-hidden="true">
+          <span class="rec"><i></i>LIVE</span>
+          <span class="lens"></span>
+          <span class="mono" id="shot-tag">SIAP</span>
+        </div>
+        <div class="bezel">
+          <div class="screen" id="screen">
+            <canvas id="preview" aria-label="Pratinjau kamera"></canvas>
+            <div class="count" id="count" aria-live="assertive"></div>
+            <div class="flash" id="flash"></div>
+            <div class="cam-msg" id="cam-wait"><p class="mono">Menyalakan kamera…</p></div>
+            <div class="cam-msg cam-error" id="cam-error" hidden>
+              <p class="cam-title" id="cam-error-title">Kamera tidak bisa dibuka</p>
+              <p id="cam-error-text"></p>
+              <div class="cam-actions">
+                <button class="btn btn-yellow btn-sm" id="cam-retry" type="button">Coba lagi</button>
+                <label class="btn btn-ghost btn-sm">Pakai foto dari galeri<input id="file-pick" type="file" accept="image/*" multiple hidden /></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="shutter-row">
+        <button class="shutter" id="btn-start" type="button" disabled>MULAI</button>
+        <p class="hint mono" id="start-hint">atau tekan <kbd>spasi</kbd></p>
+      </div>
+
+      <div class="result-stage" id="result-stage">
+        <canvas id="final" aria-label="Strip foto"></canvas>
+      </div>
+    </section>
+
+    <!-- ============ right: controls per step ============ -->
+    <aside class="panel">
+      <!-- setup -->
+      <div class="pane" data-pane="setup">
+        <fieldset class="group">
+          <legend class="mono">Layout</legend>
+          <div class="layout-opts" id="opt-layout" role="radiogroup" aria-label="Layout"></div>
+        </fieldset>
+        <fieldset class="group">
+          <legend class="mono">Warna kertas</legend>
+          <div class="chips" id="opt-frame" role="radiogroup" aria-label="Warna kertas"></div>
+        </fieldset>
+        <fieldset class="group">
+          <legend class="mono">Filter</legend>
+          <div class="chips" id="opt-filter" role="radiogroup" aria-label="Filter"></div>
+        </fieldset>
+        <div class="group">
+          <label class="mono" for="opt-caption">Teks di bawah foto</label>
+          <input class="field" id="opt-caption" maxlength="28" placeholder="jepret" autocomplete="off" />
+        </div>
+      </div>
+
+      <!-- shoot -->
+      <div class="pane" data-pane="shoot">
+        <p class="mono pane-label" id="shoot-label">Foto 1 dari 4</p>
+        <div class="mini-wrap"><canvas class="mini" id="mini" aria-label="Strip sedang tersusun"></canvas></div>
+        <button class="btn btn-ghost btn-sm" id="btn-cancel" type="button">Batal</button>
+      </div>
+
+      <!-- review -->
+      <div class="pane" data-pane="review">
+        <p class="mono pane-label">Cek dulu. Ada yang mau diulang?</p>
+        <ol class="thumbs" id="thumbs"></ol>
+        <div class="pane-actions">
+          <button class="btn btn-pink" id="btn-save" type="button">Simpan &amp; ambil QR <span class="arr" aria-hidden="true">→</span></button>
+          <button class="btn btn-ghost btn-sm" id="btn-redo" type="button">Ulangi semua</button>
+        </div>
+      </div>
+
+      <!-- uploading / done -->
+      <div class="pane" data-pane="done">
+        <div class="saving" id="saving">
+          <span class="spinner" aria-hidden="true"></span>
+          <p class="mono">Menyimpan strip…</p>
+        </div>
+        <div class="ticket" id="ticket" hidden>
+          <p class="mono">Scan buat bawa pulang</p>
+          <img class="qr" id="qr" alt="Kode QR ke halaman hasil foto" width="240" height="240" />
+          <p class="code-label mono">atau ketik kodenya di <span id="host">situs ini</span></p>
+          <p class="code" id="code">——————</p>
+          <div class="pane-actions">
+            <a class="btn btn-yellow" id="dl-strip" href="#" download>Unduh strip</a>
+            <a class="btn btn-ghost btn-sm" id="open-result" href="#" target="_blank" rel="noopener">Buka halaman hasil</a>
+          </div>
+          <p class="expire mono" id="expire"></p>
+        </div>
+        <div class="upload-fail" id="upload-fail" hidden>
+          <p class="cam-title">Gagal menyimpan ke server</p>
+          <p id="upload-fail-text">Cek koneksi internet, lalu coba lagi. Strip-nya masih aman di layar ini.</p>
+          <div class="pane-actions">
+            <button class="btn btn-pink" id="btn-retry-upload" type="button">Coba lagi</button>
+            <a class="btn btn-ghost btn-sm" id="dl-local" href="#" download="jepret-strip.jpg">Unduh langsung</a>
+          </div>
+        </div>
+        <button class="btn btn-ink new-session" id="btn-new" type="button">Sesi baru</button>
+        <div class="auto-reset" id="auto-reset" hidden><span id="auto-reset-bar"></span><p class="mono" id="auto-reset-text"></p></div>
+      </div>
+    </aside>
+  </main>
+
+  <dialog class="settings" id="settings" aria-labelledby="settings-title">
+    <form method="dialog">
+      <h2 id="settings-title">Pengaturan booth</h2>
+      <label class="row">
+        <span>Kamera</span>
+        <select class="field" id="set-camera"><option value="">Bawaan</option></select>
+      </label>
+      <label class="row">
+        <span>Hitung mundur</span>
+        <select class="field" id="set-countdown">
+          <option value="3">3 detik</option>
+          <option value="5">5 detik</option>
+          <option value="10">10 detik</option>
+        </select>
+      </label>
+      <label class="row">
+        <span>Reset otomatis setelah sesi</span>
+        <select class="field" id="set-reset">
+          <option value="0">Mati</option>
+          <option value="45">45 detik</option>
+          <option value="90">90 detik</option>
+        </select>
+      </label>
+      <label class="row check"><input type="checkbox" id="set-mirror" /> <span>Cermin (seperti kaca)</span></label>
+      <label class="row check"><input type="checkbox" id="set-sound" /> <span>Suara hitung mundur &amp; jepret</span></label>
+      <p class="note">Tersimpan di browser ini saja. Untuk acara: pasang webcam, pilih kameranya di sini, nyalakan reset otomatis, lalu tekan layar penuh.</p>
+      <button class="btn btn-ink" value="close">Selesai</button>
+    </form>
+  </dialog>
+
+  <video class="cam-src" id="video" playsinline muted autoplay aria-hidden="true"></video>
+  <script type="module" src="/src/booth/main.js"></script>
+</body>
+</html>

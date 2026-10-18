@@ -1,0 +1,17 @@
+{
+  "name": "jepret — photobox",
+  "short_name": "jepret",
+  "description": "Photobox di browser: jepret, strip foto langsung jadi, bawa pulang lewat QR.",
+  "lang": "id",
+  "start_url": "/booth/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4ecdd",
+  "theme_color": "#f4ecdd",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

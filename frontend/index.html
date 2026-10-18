@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>jepret — Photobox di browser, strip foto langsung jadi</title>
+  <meta name="description" content="Photobox yang jalan di browser HP atau laptop. Pilih layout, hitung mundur, jepret, strip foto langsung jadi dan bisa dibawa pulang lewat QR. Gratis, tanpa install, tanpa akun." />
+  <meta name="theme-color" content="#ff3d8b" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="id_ID" />
+  <meta property="og:title" content="jepret — Photobox di browser" />
+  <meta property="og:description" content="Pilih layout, jepret 4 kali, strip foto langsung jadi. Scan QR, bawa pulang." />
+  <meta property="og:image" content="/og.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="/src/styles/base.css" />
+  <link rel="stylesheet" href="/src/styles/landing.css" />
+</head>
+<body>
+  <a class="skip" href="#isi">Lewati ke konten</a>
+
+  <!-- pictograms used by the demo strip and the layout previews -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <pattern id="dots-pink" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.4" fill="#ff3d8b" /></pattern>
+      <pattern id="dots-blue" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.4" fill="#1d4fd8" /></pattern>
+      <pattern id="dots-ink" width="7" height="7" patternUnits="userSpaceOnUse"><circle cx="3.5" cy="3.5" r="1.4" fill="#16110e" /></pattern>
+      <symbol id="face-1" viewBox="0 0 100 75">
+        <circle cx="50" cy="40" r="24" fill="#f4ecdd" stroke="#16110e" stroke-width="3.5" />
+        <circle cx="41" cy="35" r="3.2" fill="#16110e" /><circle cx="59" cy="35" r="3.2" fill="#16110e" />
+        <path d="M39 46 q11 11 22 0" fill="none" stroke="#16110e" stroke-width="3.5" stroke-linecap="round" />
+      </symbol>
+      <symbol id="face-2" viewBox="0 0 100 75">
+        <circle cx="50" cy="40" r="24" fill="#f4ecdd" stroke="#16110e" stroke-width="3.5" />
+        <circle cx="41" cy="35" r="3.2" fill="#16110e" />
+        <path d="M55 36 q4 -5 8 0" fill="none" stroke="#16110e" stroke-width="3.5" stroke-linecap="round" />
+        <path d="M40 47 q12 8 22 -3" fill="none" stroke="#16110e" stroke-width="3.5" stroke-linecap="round" />
+      </symbol>
+      <symbol id="face-3" viewBox="0 0 100 75">
+        <circle cx="50" cy="40" r="24" fill="#f4ecdd" stroke="#16110e" stroke-width="3.5" />
+        <circle cx="41" cy="34" r="4.6" fill="none" stroke="#16110e" stroke-width="3" /><circle cx="59" cy="34" r="4.6" fill="none" stroke="#16110e" stroke-width="3" />
+        <ellipse cx="50" cy="50" rx="5" ry="6.5" fill="#16110e" />
+      </symbol>
+      <symbol id="face-4" viewBox="0 0 100 75">
+        <circle cx="50" cy="40" r="24" fill="#f4ecdd" stroke="#16110e" stroke-width="3.5" />
+        <path d="M37 36 l4 -5 l4 5 M55 36 l4 -5 l4 5" fill="none" stroke="#16110e" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M37 44 h26 q-2 14 -13 14 q-11 0 -13 -14z" fill="#16110e" />
+        <path d="M45 52 q5 7 10 0" fill="#ff3d8b" />
+      </symbol>
+    </defs>
+  </svg>
+
+  <header class="nav" id="nav">
+    <div class="wrap">
+      <a class="logo" href="/" aria-label="jepret, ke beranda"><span class="logo-mark" aria-hidden="true"></span>jepret</a>
+      <nav aria-label="Utama">
+        <ul>
+          <li><a href="#cara">Cara kerja</a></li>
+          <li><a href="#layout">Layout</a></li>
+          <li><a href="#tanya">Tanya</a></li>
+        </ul>
+      </nav>
+      <a class="btn btn-pink btn-sm" href="/booth/">Buka booth <span class="arr" aria-hidden="true">→</span></a>
+    </div>
+  </header>
+
+  <main id="isi">
+    <!-- ================= HERO ================= -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="copy">
+          <p class="kicker"><b>GRATIS</b> Photobox langsung di browser</p>
+          <h1>
+            <span class="l">Senyum.</span>
+            <span class="l"><span class="mark">Jepret.</span></span>
+            <span class="l"><span class="here">Bawa</span> pulang.</span>
+          </h1>
+          <p class="lede">
+            Photobox yang jalan di browser HP atau laptop. Pilih layout, hitung mundur, empat jepretan,
+            lalu <strong>strip fotonya langsung jadi</strong>. Tamu tinggal scan QR buat bawa pulang.
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-pink" href="/booth/">Buka booth <span class="arr" aria-hidden="true">→</span></a>
+            <a class="textlink" href="#cara">Lihat cara kerjanya</a>
+          </div>
+          <p class="fine mono">Tanpa install · tanpa akun · foto terhapus sendiri 7 hari</p>
+        </div>
+
+        <div class="stage" aria-label="Demo booth: tekan MULAI untuk mencoba">
+          <span class="sticker st-a" aria-hidden="true">QR langsung jadi</span>
+          <span class="sticker st-b" aria-hidden="true">+GIF</span>
+
+          <div class="booth">
+            <div class="sign"><span>JEPRET ★ BOOTH</span><i class="bulbs" aria-hidden="true"></i></div>
+            <div class="cab">
+              <div class="lensbar" aria-hidden="true">
+                <span class="rec"><i></i>REC</span>
+                <span class="lens"></span>
+                <span class="mono iso">ISO 400</span>
+              </div>
+              <div class="bezel">
+                <div class="screen" id="demo-screen" data-state="idle">
+                  <div class="scr-idle">
+                    <p class="mono">Booth siap</p>
+                    <button class="go" id="demo-go" type="button">MULAI</button>
+                    <p class="scr-hint">ketuk buat coba demo</p>
+                  </div>
+                  <div class="scr-live" aria-hidden="true">
+                    <svg class="scr-face" viewBox="0 0 100 75"><use href="#face-1" /></svg>
+                    <span class="scr-count" id="demo-count">3</span>
+                    <span class="scr-tag mono" id="demo-tag">FOTO 1/4</span>
+                  </div>
+                  <div class="scr-flash" aria-hidden="true"></div>
+                  <i class="glare" aria-hidden="true"></i>
+                </div>
+              </div>
+              <div class="cab-foot">
+                <span class="mono">▼ hasil cetak</span>
+                <span class="slot" aria-hidden="true"></span>
+              </div>
+            </div>
+            <div class="tray">
+              <div class="demo-strip" id="demo-strip" aria-hidden="true">
+                <div class="ds-frame" style="--fc: var(--pink)"><svg viewBox="0 0 100 75"><rect width="100" height="75" fill="url(#dots-ink)" opacity=".22"/><use href="#face-1" /></svg></div>
+                <div class="ds-frame" style="--fc: var(--yellow)"><svg viewBox="0 0 100 75"><rect width="100" height="75" fill="url(#dots-pink)" opacity=".45"/><use href="#face-2" /></svg></div>
+                <div class="ds-frame" style="--fc: var(--blue-soft)"><svg viewBox="0 0 100 75"><rect width="100" height="75" fill="url(#dots-blue)" opacity=".4"/><use href="#face-3" /></svg></div>
+                <div class="ds-frame" style="--fc: var(--pink-soft)"><svg viewBox="0 0 100 75"><rect width="100" height="75" fill="url(#dots-pink)" opacity=".4"/><use href="#face-4" /></svg></div>
+                <p class="ds-cap">jepret<small class="mono" id="demo-date">18.10.26</small></p>
+              </div>
+            </div>
+          </div>
+          <a class="after-demo sticker" id="after-demo" href="/booth/" hidden>Itu tadi demo. Sekarang wajahmu →</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= TICKER ================= -->
+    <div class="ticker-clip" aria-hidden="true"><div class="ticker">
+      <div class="ticker-track">
+        <span>Pilih layout</span><b>✶</b><span>Hitung mundur</span><b>✶</b><span>Jepret</span><b>✶</b><span>Strip jadi</span><b>✶</b><span>Scan QR</span><b>✶</b><span>Bawa pulang</span><b>✶</b>
+        <span>Pilih layout</span><b>✶</b><span>Hitung mundur</span><b>✶</b><span>Jepret</span><b>✶</b><span>Strip jadi</span><b>✶</b><span>Scan QR</span><b>✶</b><span>Bawa pulang</span><b>✶</b>
+      </div>
+    </div></div>
+
+    <!-- ================= CARA KERJA ================= -->
+    <section class="how" id="cara">
+      <div class="wrap">
+        <header class="sec-head">
+          <p class="mono">Cara kerja</p>
+          <h2>Dari <em>“cheese”</em> sampai di HP tamu, kurang dari semenit.</h2>
+        </header>
+
+        <div class="how-grid">
+          <figure class="receipt" aria-label="Contoh struk sesi">
+            <div class="rc-top">
+              <span class="logo"><span class="logo-mark" aria-hidden="true"></span>jepret</span>
+              <p class="mono">Struk sesi · #K7M2QX</p>
+            </div>
+            <ol class="rc-lines">
+              <li><span>01 Layout</span><i></i><span>Strip 4</span></li>
+              <li><span>02 Warna</span><i></i><span>Pink</span></li>
+              <li><span>03 Filter</span><i></i><span>Riso</span></li>
+              <li><span>04 Jepretan</span><i></i><span>4×</span></li>
+              <li><span>05 GIF</span><i></i><span>1</span></li>
+            </ol>
+            <div class="rc-total"><span class="mono">Total</span><b>Rp0</b></div>
+            <div class="rc-qr" aria-hidden="true">
+              <svg viewBox="0 0 29 29" shape-rendering="crispEdges"><path stroke="#16110e" d="M0 0.5h7m4 0h1m1 0h2m1 0h1m1 0h2m2 0h7m-29 1h1m5 0h1m1 0h1m1 0h1m1 0h1m1 0h2m1 0h1m1 0h2m1 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m4 0h4m1 0h1m2 0h2m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h7m2 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h2m4 0h1m1 0h4m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m4 0h3m1 0h3m1 0h2m1 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-17 1h3m1 0h5m-21 1h1m1 0h1m1 0h1m1 0h1m3 0h2m2 0h5m1 0h1m3 0h1m2 0h1m-28 1h5m4 0h2m3 0h1m5 0h4m1 0h1m2 0h1m-29 1h4m2 0h2m2 0h4m2 0h2m3 0h1m1 0h1m2 0h3m-28 1h2m1 0h2m3 0h2m1 0h1m2 0h1m1 0h1m3 0h4m2 0h1m-28 1h3m1 0h1m1 0h2m2 0h1m4 0h3m3 0h2m2 0h1m1 0h2m-29 1h2m2 0h1m3 0h3m1 0h2m2 0h2m2 0h3m2 0h1m2 0h1m-28 1h3m1 0h2m1 0h3m3 0h1m1 0h3m2 0h1m3 0h1m1 0h2m-28 1h1m1 0h1m3 0h1m1 0h1m1 0h9m3 0h1m1 0h1m1 0h1m-28 1h1m1 0h1m1 0h3m1 0h2m1 0h2m1 0h1m2 0h1m1 0h5m1 0h1m1 0h2m-28 1h2m1 0h2m1 0h6m1 0h1m1 0h1m3 0h3m2 0h2m1 0h1m-29 1h1m1 0h1m2 0h2m4 0h1m1 0h1m3 0h1m4 0h2m3 0h2m-28 1h1m2 0h1m4 0h2m1 0h1m3 0h4m4 0h2m1 0h1m-28 1h1m1 0h1m2 0h2m1 0h1m1 0h3m2 0h3m2 0h5m-17 1h1m1 0h2m1 0h1m2 0h1m2 0h2m3 0h1m1 0h3m-29 1h7m2 0h1m4 0h1m4 0h2m1 0h1m1 0h2m1 0h2m-29 1h1m5 0h1m2 0h6m1 0h3m1 0h1m3 0h2m2 0h1m-29 1h1m1 0h3m1 0h1m1 0h3m3 0h5m1 0h5m3 0h1m-29 1h1m1 0h3m1 0h1m2 0h2m2 0h2m1 0h1m3 0h1m2 0h2m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h1m4 0h2m1 0h2m1 0h2m2 0h3m2 0h1m-29 1h1m5 0h1m7 0h1m2 0h4m1 0h1m1 0h1m2 0h1m-28 1h7m1 0h1m3 0h2m2 0h2m1 0h2m2 0h3m1 0h2"/></svg>
+              <p class="mono">Scan → unduh strip, foto, GIF</p>
+            </div>
+            <p class="rc-foot mono">Foto disimpan 7 hari · lalu dihapus</p>
+          </figure>
+
+          <ol class="steps">
+            <li>
+              <span class="n">01</span>
+              <h3>Pilih bentuk cetakan.</h3>
+              <p>Strip klasik 4 foto, strip 3, grid 2×2, atau satu foto gaya polaroid. Pilih warna kertas dan filternya. Yang tampil di layar persis yang tercetak.</p>
+            </li>
+            <li>
+              <span class="n">02</span>
+              <h3>Hitung mundur, jepret.</h3>
+              <p>Tekan mulai atau tombol spasi. Ada hitungan mundur dan kilat di tiap foto, jadi gak ada yang ketinggalan pose. Gak suka satu foto? Ulangi foto itu saja.</p>
+            </li>
+            <li>
+              <span class="n">03</span>
+              <h3>Scan, bawa pulang.</h3>
+              <p>Strip langsung tersusun, ditambah GIF dari semua jepretan. Layar menampilkan QR dan kode 6 huruf. Tamu scan dari HP-nya sendiri dan unduh semuanya.</p>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= LAYOUT ================= -->
+    <section class="layouts" id="layout">
+      <div class="wrap">
+        <header class="sec-head">
+          <p class="mono">Layout</p>
+          <h2>Empat bentuk cetakan. <span class="nowrap">Lima warna kertas.</span></h2>
+        </header>
+        <div class="lay-controls" role="radiogroup" aria-label="Warna kertas" id="lay-colors"></div>
+        <div class="lay-row" id="lay-row"></div>
+        <p class="lay-note">Ukuran siap cetak 300 dpi. Dua strip pas di satu lembar kertas foto 4R, tinggal potong tengah.</p>
+      </div>
+    </section>
+
+    <!-- ================= ALASAN ================= -->
+    <section class="why">
+      <div class="wrap">
+        <ul class="why-list">
+          <li>
+            <h3><span class="hl hl-y">Gak perlu install.</span></h3>
+            <p>Buka linknya, izinkan kamera, mulai. Jalan di Chrome, Safari, dan Firefox, di HP maupun laptop.</p>
+          </li>
+          <li>
+            <h3><span class="hl hl-p">Fotomu bukan dagangan.</span></h3>
+            <p>Gak ada akun, gak ada pelacak iklan. Data lokasi di foto dibuang saat diunggah, dan semuanya dihapus otomatis setelah 7 hari.</p>
+          </li>
+          <li>
+            <h3><span class="hl hl-b">Siap buat acara.</span></h3>
+            <p>Mode layar penuh, tombol spasi buat mulai (remote presenter atau tombol USB juga bisa), teks nama acara di bawah strip, dan reset otomatis setelah tiap sesi.</p>
+          </li>
+          <li>
+            <h3><span class="hl hl-y">Android menyusul.</span></h3>
+            <p>Aplikasinya lagi dikerjakan. Sementara itu, buka booth di Chrome lalu pilih <em>Tambahkan ke layar utama</em> supaya terbuka seperti aplikasi.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= FAQ ================= -->
+    <section class="faq" id="tanya">
+      <div class="wrap faq-wrap">
+        <header class="sec-head">
+          <p class="mono">Tanya</p>
+          <h2>Yang biasanya ditanyain.</h2>
+        </header>
+        <div class="qa">
+          <details>
+            <summary>Fotonya disimpan di mana, sampai kapan?</summary>
+            <p>Strip, foto per jepretan, dan GIF disimpan di server kami selama 7 hari supaya bisa diunduh lewat QR atau kode. Setelah itu terhapus otomatis. Metadata seperti lokasi GPS dibuang waktu diunggah.</p>
+          </details>
+          <details>
+            <summary>Kameranya gak muncul. Kenapa?</summary>
+            <p>Pastikan browser diberi izin kamera. Kalau link dibuka dari dalam Instagram, TikTok, atau WhatsApp, buka ulang di Chrome atau Safari. Kamera yang sedang dipakai aplikasi lain (Zoom, Meet) juga bisa bikin gagal. Kalau tetap tidak bisa, booth menyediakan pilihan ambil foto dari galeri.</p>
+          </details>
+          <details>
+            <summary>Bisa dicetak?</summary>
+            <p>Bisa. Strip 4 dan Strip 3 berukuran 2×6 inci di 300 dpi, jadi dua strip pas di satu kertas 4R. Grid 2×2 pas di 4×5 inci, Polaroid 3,6×4,4 inci. Unduh JPG-nya lalu cetak di printer foto biasa.</p>
+          </details>
+          <details>
+            <summary>Bisa dipakai buat acara atau usaha?</summary>
+            <p>Bisa. Siapkan laptop dan webcam, buka booth, tekan tombol layar penuh. Di menu Pengaturan kamu bisa pilih kamera, lama hitung mundur, teks nama acara, dan reset otomatis supaya tamu berikutnya langsung mulai.</p>
+          </details>
+          <details>
+            <summary>Kapan aplikasi Android-nya keluar?</summary>
+            <p>Sedang dikerjakan, pakai server yang sama dengan versi web ini. Kode QR dan link hasil foto yang kamu dapat sekarang tetap berlaku di aplikasinya nanti.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CTA ================= -->
+    <section class="end">
+      <div class="wrap end-wrap">
+        <div class="end-card halftone">
+          <h2>Booth-nya udah nyala.<br />Tinggal kamu.</h2>
+          <a class="btn btn-ink" href="/booth/">Buka booth <span class="arr" aria-hidden="true">→</span></a>
+        </div>
+        <form class="code-form" id="code-form" action="/s/" method="get">
+          <label for="code-in"><span class="mono">Punya kode sesi?</span> Ketik 6 hurufnya.</label>
+          <div class="code-row">
+            <input class="field code-in" id="code-in" name="k" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="6" placeholder="K7M2QX" pattern="[2-9A-HJ-NP-Za-hj-np-z]{6}" required />
+            <button class="btn btn-yellow" type="submit">Ambil foto</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-wrap">
+      <a class="logo" href="/"><span class="logo-mark" aria-hidden="true"></span>jepret</a>
+      <nav aria-label="Footer">
+        <a href="/booth/">Booth</a>
+        <a href="#cara">Cara kerja</a>
+        <a href="#tanya">Tanya</a>
+      </nav>
+      <p class="mono">© <span id="year">2026</span> jepret</p>
+    </div>
+  </footer>
+
+  <script type="module" src="/src/landing.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# jepret photobox — FastAPI backend + built frontend, di belakang nginx (work.mangaisekai.com)
+# Pasang: cp deploy/photobox.service /etc/systemd/system/ && systemctl daemon-reload && systemctl enable --now photobox
+[Unit]
+Description=jepret photobox (FastAPI) - work.mangaisekai.com
+After=network.target
+
+[Service]
+# Unggahan foto dari publik diproses di sini, jadi jalan sebagai user sementara tanpa hak root.
+DynamicUser=yes
+StateDirectory=photobox
+Environment=PHOTOBOX_DATA_DIR=/var/lib/photobox
+Environment=PHOTOBOX_PUBLIC_URL=https://work.mangaisekai.com
+Environment=PHOTOBOX_RETENTION_DAYS=7
+WorkingDirectory=/srv/photobox/backend
+ExecStart=/srv/photobox/backend/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8090 --proxy-headers --forwarded-allow-ips 127.0.0.1 --no-server-header
+Restart=always
+RestartSec=3
+MemoryMax=500M
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target

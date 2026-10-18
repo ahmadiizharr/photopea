@@ -1,0 +1,72 @@
+{
+  "layouts": [
+    {
+      "id": "strip4",
+      "name": "Strip 4",
+      "note": "Strip klasik 2×6 inci, 4 jepretan",
+      "shots": 4,
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        { "x": 40, "y": 40, "w": 520, "h": 390 },
+        { "x": 40, "y": 450, "w": 520, "h": 390 },
+        { "x": 40, "y": 860, "w": 520, "h": 390 },
+        { "x": 40, "y": 1270, "w": 520, "h": 390 }
+      ],
+      "caption": { "x": 40, "y": 1660, "w": 520, "h": 140 }
+    },
+    {
+      "id": "strip3",
+      "name": "Strip 3",
+      "note": "Tiga foto lebih besar, judul lega",
+      "shots": 3,
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        { "x": 40, "y": 40, "w": 520, "h": 460 },
+        { "x": 40, "y": 524, "w": 520, "h": 460 },
+        { "x": 40, "y": 1008, "w": 520, "h": 460 }
+      ],
+      "caption": { "x": 40, "y": 1468, "w": 520, "h": 332 }
+    },
+    {
+      "id": "grid4",
+      "name": "Grid 2×2",
+      "note": "Empat foto, cetak 4×5 inci",
+      "shots": 4,
+      "w": 1200,
+      "h": 1500,
+      "slots": [
+        { "x": 40, "y": 40, "w": 540, "h": 600 },
+        { "x": 620, "y": 40, "w": 540, "h": 600 },
+        { "x": 40, "y": 680, "w": 540, "h": 600 },
+        { "x": 620, "y": 680, "w": 540, "h": 600 }
+      ],
+      "caption": { "x": 40, "y": 1280, "w": 1120, "h": 220 }
+    },
+    {
+      "id": "polaroid",
+      "name": "Polaroid",
+      "note": "Satu foto, bingkai bawah tebal",
+      "shots": 1,
+      "w": 1080,
+      "h": 1320,
+      "slots": [{ "x": 60, "y": 60, "w": 960, "h": 960 }],
+      "caption": { "x": 60, "y": 1020, "w": 960, "h": 300 }
+    }
+  ],
+  "frames": [
+    { "id": "pink", "name": "Pink", "bg": "#ff3d8b", "text": "#16110e", "accent": "#ffd23e" },
+    { "id": "kuning", "name": "Kuning", "bg": "#ffd23e", "text": "#16110e", "accent": "#ff3d8b" },
+    { "id": "biru", "name": "Biru", "bg": "#1d4fd8", "text": "#fbf4e6", "accent": "#ffd23e" },
+    { "id": "kertas", "name": "Kertas", "bg": "#f4ecdd", "text": "#16110e", "accent": "#ff3d8b" },
+    { "id": "hitam", "name": "Hitam", "bg": "#16110e", "text": "#f4ecdd", "accent": "#ff3d8b" }
+  ],
+  "filters": [
+    { "id": "normal", "name": "Normal" },
+    { "id": "bw", "name": "Hitam Putih" },
+    { "id": "hangat", "name": "Hangat" },
+    { "id": "pudar", "name": "Film Pudar" },
+    { "id": "riso", "name": "Riso" }
+  ]
+}

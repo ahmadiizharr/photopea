@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fotomu — jepret</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="no-referrer" />
+  <meta name="theme-color" content="#f4ecdd" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Hanken+Grotesk:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="/src/styles/base.css" />
+  <link rel="stylesheet" href="/src/styles/result.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="/" aria-label="jepret, ke beranda"><span class="logo-mark" aria-hidden="true"></span>jepret</a>
+      <a class="btn btn-pink btn-sm" href="/booth/">Buka booth <span class="arr" aria-hidden="true">→</span></a>
+    </div>
+  </header>
+
+  <main class="wrap" id="main" data-state="loading">
+    <p class="loading mono" role="status">Mencari sesi…</p>
+
+    <section class="found" aria-labelledby="found-title">
+      <header class="head">
+        <p class="mono" id="meta"></p>
+        <h1 id="found-title">Fotomu sudah <span class="mark">jadi.</span></h1>
+      </header>
+      <div class="grid">
+        <figure class="strip-fig">
+          <img id="strip" alt="Strip foto" />
+        </figure>
+        <div class="side">
+          <div class="card actions">
+            <a class="btn btn-pink" id="dl-strip" href="#">Unduh strip <span class="arr" aria-hidden="true">↓</span></a>
+            <a class="btn btn-yellow" id="dl-gif" href="#">Unduh GIF <span class="arr" aria-hidden="true">↓</span></a>
+            <button class="btn btn-ghost" id="share" type="button">Bagikan link</button>
+            <p class="expire" id="expire"></p>
+          </div>
+          <figure class="card gif-card" id="gif-card">
+            <img id="gif" alt="Animasi GIF dari semua jepretan" />
+            <figcaption class="mono">GIF · semua jepretan</figcaption>
+          </figure>
+        </div>
+      </div>
+      <section class="shots" aria-labelledby="shots-title">
+        <h2 id="shots-title">Per jepretan</h2>
+        <p>Resolusi penuh, tanpa bingkai. Ketuk buat unduh.</p>
+        <ul id="shots"></ul>
+      </section>
+    </section>
+
+    <section class="missing" aria-labelledby="missing-title">
+      <h1 id="missing-title">Sesinya gak <span class="mark">ketemu.</span></h1>
+      <p>Kodenya mungkin salah ketik, atau fotonya sudah lewat 7 hari dan terhapus otomatis.</p>
+      <form class="code-form" id="code-form">
+        <label class="mono" for="code-in">Coba ketik ulang kodenya</label>
+        <div class="code-row">
+          <input class="field code-in" id="code-in" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="K7M2QX" required />
+          <button class="btn btn-yellow" type="submit">Cari</button>
+        </div>
+      </form>
+      <a class="textlink" href="/booth/">Atau foto lagi di booth →</a>
+    </section>
+  </main>
+
+  <script type="module" src="/src/result.js"></script>
+</body>
+</html>
