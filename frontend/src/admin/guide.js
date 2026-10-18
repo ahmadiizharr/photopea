@@ -2,7 +2,6 @@ import { formats } from '../lib/catalog.js';
 import { esc } from './ui.js';
 
 const COLORS = ['#ff7eb3', '#3aa0ff', '#22c07a', '#8a5cff', '#ffb020', '#ff6a3d', '#14b8c4', '#c45cff'];
-const RECOMMENDED = '4r-strip/4-kembar';
 const SAFE = 36;
 const cm = (inch) => (inch * 2.54).toFixed(1).replace('.', ',');
 
@@ -12,11 +11,15 @@ function diagram(f, p) {
     <rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" fill="${COLORS[(s.photo - 1) % COLORS.length]}"/>
     <text x="${s.x + s.w / 2}" y="${s.y + s.h / 2}" font-size="${label}" font-family="DM Mono, monospace" font-weight="500" fill="#fff" text-anchor="middle" dominant-baseline="middle">${s.photo}</text>`).join('');
   const cut = f.cut_x ? `<line x1="${f.cut_x}" y1="0" x2="${f.cut_x}" y2="${f.h}" stroke="#1d4fd8" stroke-width="8" stroke-dasharray="30 20"/>` : '';
+  const t = f.text;
+  const text = t ? `
+    <rect x="${t.x}" y="${t.y}" width="${t.w}" height="${t.h}" fill="#1fae5f" fill-opacity=".12" stroke="#1fae5f" stroke-width="8" stroke-dasharray="30 20"/>
+    <text x="${t.x + t.w / 2}" y="${t.y + t.h / 2}" font-size="${Math.round(t.h / 3.2)}" font-family="DM Mono, monospace" font-weight="500" fill="#1a8f4e" text-anchor="middle" dominant-baseline="middle">NAMA &amp; TANGGAL</text>` : '';
   return `
     <svg viewBox="0 0 ${f.w} ${f.h}" role="img" aria-label="${esc(p.name)}">
       <rect width="${f.w}" height="${f.h}" fill="#fbf7ef"/>
       <rect x="${SAFE}" y="${SAFE}" width="${f.w - 2 * SAFE}" height="${f.h - 2 * SAFE}" fill="none" stroke="#ff3d8b" stroke-width="6" stroke-dasharray="24 16"/>
-      ${slots}${cut}
+      ${slots}${cut}${text}
     </svg>`;
 }
 
@@ -42,6 +45,7 @@ export function renderGuide(view) {
       <li><b>Lubang foto ≥ 300 px</b>Rasio 4:3 (melebar) paling pas untuk kamera/webcam. Lubang bentuk bebas (bulat, awan) boleh; foto diisi ke kotak luarnya.</li>
       <li><b>Strip 4R: jangan lewati garis tengah</b>4R · 2 strip dipotong di x = 600 px. Lubang yang melintasi garis itu ditolak.</li>
       <li><b>Maks 8 foto per sesi</b>Lubang dengan nomor sama memakai foto yang sama, misalnya strip kiri dan kanan kembar.</li>
+      <li><b>Wedding: tulis nama di PNG</b>Untuk 5R landscape, nama pengantin dan tanggal didesain langsung di pita bawah. Satu acara = satu frame.</li>
     </ul>
     ${formats.map((f) => `
       <section class="card fmt" id="fmt-${f.id}">
@@ -53,12 +57,12 @@ export function renderGuide(view) {
             <li>kertas ${esc(f.paper)}</li>
           </ul>
         </div>
-        <p>${esc(f.note)} ${printLine(f)}.</p>
+        <p>${esc(f.note)} ${printLine(f)}.${f.text ? ` Area tulisan: <b>${f.text.w}×${f.text.h} px</b> di bawah, dibiarkan kertas (tidak bolong) supaya desainer menulis nama &amp; tanggal di situ.` : ''}</p>
         <div class="presets">
           ${f.presets.map((p) => `
             <figure class="preset" style="margin:0">
               ${diagram(f, p)}
-              ${`${f.id}/${p.id}` === RECOMMENDED ? '<span class="badge-rec">Rekomendasi</span>' : ''}
+              ${p.tag ? `<span class="badge-rec">${esc(p.tag)}</span>` : ''}
               <b>${esc(p.name)}</b>
               <a class="btn btn-ghost btn-sm" href="/api/admin/guides/${f.id}/${p.id}.png" download>Unduh template PNG</a>
             </figure>`).join('')}

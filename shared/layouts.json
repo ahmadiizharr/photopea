@@ -88,6 +88,7 @@
         {
           "id": "4-kembar",
           "name": "4 foto · strip kiri & kanan kembar",
+          "tag": "Rekomendasi",
           "slots": [
             { "x": 40, "y": 40, "w": 520, "h": 390, "photo": 1 },
             { "x": 40, "y": 450, "w": 520, "h": 390, "photo": 2 },
@@ -193,6 +194,45 @@
           "name": "1 foto besar",
           "slots": [
             { "x": 60, "y": 60, "w": 1380, "h": 1600, "photo": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "5r-landscape",
+      "name": "5R landscape",
+      "paper": "5R",
+      "inch": [7, 5],
+      "w": 2100,
+      "h": 1500,
+      "cut_x": null,
+      "text": { "x": 60, "y": 1150, "w": 1980, "h": 290 },
+      "print": { "page": [7, 5], "per_page": 1 },
+      "note": "Lembar 5×7 inci mendatar dengan pita tulisan di bawah (±1 inci) untuk nama pengantin dan tanggal. Pas untuk wedding, lamaran, dan acara formal.",
+      "presets": [
+        {
+          "id": "besar-2-kecil",
+          "name": "1 foto besar + 2 kecil",
+          "tag": "Wedding",
+          "slots": [
+            { "x": 60, "y": 60, "w": 1413, "h": 1060, "photo": 1 },
+            { "x": 1503, "y": 60, "w": 537, "h": 515, "photo": 2 },
+            { "x": 1503, "y": 605, "w": 537, "h": 515, "photo": 3 }
+          ]
+        },
+        {
+          "id": "2-foto",
+          "name": "2 foto berdampingan",
+          "slots": [
+            { "x": 60, "y": 60, "w": 975, "h": 1060, "photo": 1 },
+            { "x": 1065, "y": 60, "w": 975, "h": 1060, "photo": 2 }
+          ]
+        },
+        {
+          "id": "lebar",
+          "name": "1 foto lebar",
+          "slots": [
+            { "x": 60, "y": 60, "w": 1980, "h": 1060, "photo": 1 }
           ]
         }
       ]

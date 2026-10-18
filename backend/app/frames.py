@@ -98,18 +98,22 @@ def _components(mask: bytes, w: int, h: int) -> list[tuple[int, int, int, int, i
 
 
 def _reading_order(boxes: list[dict]) -> list[dict]:
-    """Top-to-bottom rows, left-to-right inside a row."""
+    """Top-to-bottom rows, left-to-right inside a row.
+
+    A hole joins a row when its centre falls inside the row's vertical span, so a big photo
+    with two small ones stacked beside it reads as one row: big first, then the small ones.
+    """
     rows: list[list[dict]] = []
-    for b in sorted(boxes, key=lambda b: b["y"] + b["h"] / 2):
+    for b in sorted(boxes, key=lambda b: (b["y"], b["x"])):
         cy = b["y"] + b["h"] / 2
-        if rows:
-            r = rows[-1]
-            rcy = sum(x["y"] + x["h"] / 2 for x in r) / len(r)
-            if abs(cy - rcy) < min(min(x["h"] for x in r), b["h"]) * 0.4:
+        for r in rows:
+            if min(x["y"] for x in r) <= cy <= max(x["y"] + x["h"] for x in r):
                 r.append(b)
-                continue
-        rows.append([b])
-    return [b for r in rows for b in sorted(r, key=lambda b: b["x"])]
+                break
+        else:
+            rows.append([b])
+    rows.sort(key=lambda r: min(x["y"] for x in r))
+    return [b for r in rows for b in sorted(r, key=lambda b: (b["x"], b["y"]))]
 
 
 def detect(im: Image.Image, fmt: dict, issues: list[dict]) -> list[dict]:
@@ -185,6 +189,9 @@ def detect(im: Image.Image, fmt: dict, issues: list[dict]) -> list[dict]:
         ar = b["w"] / b["h"]
         if ar > 2.2 or ar < 0.45:
             _issue(issues, "warn", f"{name} sangat lonjong ({b['w']}×{b['h']}); gambar kamera akan banyak terpotong.")
+        text = fmt.get("text")
+        if text and x0 < text["x"] + text["w"] and x1 > text["x"] and y0 < text["y"] + text["h"] and y1 > text["y"]:
+            _issue(issues, "warn", f"{name} masuk ke area tulisan di bawah; nama atau tanggal bisa tertutup foto.")
         if b["fill"] < 0.85:
             _issue(issues, "info", f"{name} berbentuk bebas; foto diisi ke kotak luarnya dan bagian di luar bentuk tertutup frame.")
         region = alpha.crop((x0, y0, x1, y1))
@@ -272,5 +279,18 @@ def guide(fmt: dict, preset: dict) -> bytes:
     caption = f"{fmt['name']} · {W}x{H} px · 300 dpi · garis pink = batas aman 3 mm"
     if fmt.get("cut_x"):
         caption += " · garis biru = potong"
-    d.text((m + 8, H - m - 10), caption, fill=grey, font=_font(max(14, W // 60)), anchor="ls")
+    small = _font(max(14, W // 60))
+    text = fmt.get("text")
+    if text:
+        # Room for names/date: marked, not cut out, so the designer letters straight into it.
+        green = (31, 174, 95, 255)
+        x0, y0, x1, y1 = text["x"], text["y"], text["x"] + text["w"], text["y"] + text["h"]
+        for seg in ((x0, y0, x1, y0), (x0, y1, x1, y1), (x0, y0, x0, y1), (x1, y0, x1, y1)):
+            dashed(*seg, green)
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        d.text((cx, cy - text["h"] * 0.12), "AREA TULISAN · nama pengantin & tanggal", fill=green,
+               font=_font(max(16, text["h"] // 6)), anchor="mm")
+        d.text((cx, cy + text["h"] * 0.22), f"{text['w']}x{text['h']} px · {caption}", fill=grey, font=small, anchor="mm")
+    else:
+        d.text((m + 8, H - m - 10), caption, fill=grey, font=small, anchor="ls")
     return save_png(im)

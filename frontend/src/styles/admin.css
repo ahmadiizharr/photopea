@@ -234,6 +234,8 @@ td.actions { text-align: right; }
   font: 700 14px var(--body);
   box-shadow: 2px 2px 0 var(--ink);
 }
+.text-band { position: absolute; display: grid; place-items: end start; border: 2px dashed var(--green); pointer-events: none; }
+.text-band span { margin: 4px; padding: 1px 6px; border-radius: 4px; background: var(--green); color: #fff; font: 500 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; }
 .issues { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: 14px; }
 .issues li { display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; padding: 8px 10px; border-radius: 10px; background: var(--paper); }
 .issues li::before { content: 'i'; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--ink); font: 700 12px var(--mono); background: #fff; }

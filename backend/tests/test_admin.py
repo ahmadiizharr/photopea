@@ -166,6 +166,19 @@ def test_upload_rejects_unusable_files(admin, png, needle):
     assert needle in r.json()["detail"]
 
 
+def test_hole_in_wedding_text_band_is_flagged(admin):
+    pack = make_pack(admin)
+    hole = {"x": 300, "y": 1200, "w": 600, "h": 200, "photo": 4}
+    f = upload_frame(admin, pack["id"], fmt="5r-landscape",
+                     png=frame_png("5r-landscape", "besar-2-kecil", extra_hole=hole)).json()
+    assert f["n_photos"] == 4
+    assert any("area tulisan" in i["text"] and i["level"] == "warn" for i in f["issues"])
+    clean = upload_frame(admin, pack["id"], fmt="5r-landscape", png=frame_png("5r-landscape", "besar-2-kecil")).json()
+    # the big photo is Foto 1, then the two small ones top to bottom
+    assert [(s["x"], s["y"], s["photo"]) for s in clean["slots"]] == [(60, 60, 1), (1503, 60, 2), (1503, 605, 3)]
+    assert not any("area tulisan" in i["text"] for i in clean["issues"])
+
+
 def test_guides_round_trip_through_the_detector(admin):
     """Every starter template we hand out must upload cleanly and give back its own slots."""
     for fmt in FORMATS.values():

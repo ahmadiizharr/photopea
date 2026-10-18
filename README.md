@@ -28,6 +28,7 @@ deploy/    unit systemd + config nginx yang sedang terpasang
 | 4R · 2 strip | 1200×1800 | 1 per 4×6 in, dipotong di x = 600 |
 | 4R penuh | 1200×1800 | 1 per 4×6 in |
 | 5R | 1500×2100 | 1 per 5×7 in |
+| 5R landscape (wedding) | 2100×1500, pita tulisan 1980×290 di bawah | 1 per 7×5 in |
 | Polaroid (5R ÷ 2) | 1050×1500 | 2 per 7×5 in (5R landscape) |
 | 2R | 750×1050 | 1 per 2,5×3,5 in |
 

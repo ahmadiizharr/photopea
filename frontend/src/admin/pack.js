@@ -39,6 +39,7 @@ export async function editFrame(f, { fresh = false } = {}) {
       <div class="stage" id="stage" style="--ar:${f.w} / ${f.h}">
         ${f.slots.map((s, i) => `<div class="blk" data-i="${i}" style="position:absolute;left:${(s.x / f.w) * 100}%;top:${(s.y / f.h) * 100}%;width:${(s.w / f.w) * 100}%;height:${(s.h / f.h) * 100}%"></div>`).join('')}
         <img src="${f.url}" alt="" />
+        ${fmt?.text ? `<div class="text-band" style="left:${(fmt.text.x / f.w) * 100}%;top:${(fmt.text.y / f.h) * 100}%;width:${(fmt.text.w / f.w) * 100}%;height:${(fmt.text.h / f.h) * 100}%"><span>area tulisan</span></div>` : ''}
         ${f.slots.map((s, i) => `
           <label class="slot-tag" style="left:${(s.x / f.w) * 100}%;top:${(s.y / f.h) * 100}%;width:${(s.w / f.w) * 100}%;height:${(s.h / f.h) * 100}%">
             <select data-i="${i}" aria-label="Lubang ${i + 1} diisi foto nomor">
