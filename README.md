@@ -17,6 +17,10 @@ Satu layar penuh per langkah, tombol aksi di bar bawah:
      lanjut sendiri (cek tiap 2 detik).
    - *Kode voucher*: voucher gratis langsung lanjut; voucher potongan mengurangi total, sisanya ke kasir.
    Tanpa paket aktif dan frame gratis, langkah ini dilewati.
+
+   Begitu lunas, tamu punya **3 menit** untuk Foto dan Cek (ubah di Pengaturan booth: 2/3/5 menit atau
+   tanpa batas). Sisa waktu tampil di pojok kanan atas. Waktu habis: belum foto → foto mulai sendiri;
+   sedang foto → diselesaikan; di layar Cek → langsung disimpan. Tamu tetap dapat fotonya.
 3. **Foto** — kamera dengan 15 filter (thumbnail live), hitung mundur, jepret.
 4. **Cek** — ulang per foto atau semua.
 5. **Unduh** — QR, kode, unduh strip, cetak.

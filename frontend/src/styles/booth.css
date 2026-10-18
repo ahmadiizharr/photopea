@@ -88,6 +88,28 @@ body.app {
   .progress li span, .progress li:not([data-state='now']) span { font-size: 10px; }
 }
 
+/* ---------- time left after paying ---------- */
+.limit {
+  position: fixed;
+  top: 80px;
+  right: max(16px, env(safe-area-inset-right));
+  z-index: 25;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-width: 118px;
+  padding: 8px 14px 10px;
+  border: 2.5px solid var(--ink);
+  border-radius: 16px;
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: 4px 4px 0 var(--pink);
+}
+.limit .mono { font-size: 9.5px; letter-spacing: .12em; opacity: .85; }
+.limit b { font: 500 30px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.limit.low { background: var(--pink); color: #fff; box-shadow: 4px 4px 0 var(--ink); animation: throb 1s ease-in-out infinite; }
+@keyframes throb { 50% { transform: scale(1.06); } }
+
 /* ---------- steps ---------- */
 .steps { min-width: 0; }
 .step { display: none; flex-direction: column; min-height: calc(100dvh - 66px); }
@@ -442,6 +464,9 @@ kbd {
   .hint { display: none; }
   .bar-total { font-size: 22px; }
   .pay-code { font-size: 52px; }
+  .limit { top: 74px; right: 10px; min-width: 0; padding: 5px 10px 7px; border-radius: 12px; }
+  .limit .mono { font-size: 8.5px; }
+  .limit b { font-size: 21px; }
 }
 
 /* ---------- settings dialog ---------- */

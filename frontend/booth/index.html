@@ -36,6 +36,11 @@
     </div>
   </header>
 
+  <div class="limit" id="limit" role="timer" hidden>
+    <span class="mono" id="limit-label">Sisa waktu</span>
+    <b id="limit-time">3:00</b>
+  </div>
+
   <main class="steps">
     <!-- ============ 1. frame ============ -->
     <section class="step" data-screen="frame" aria-labelledby="t-frame">
@@ -260,6 +265,15 @@
           <option value="3">3 detik</option>
           <option value="5">5 detik</option>
           <option value="10">10 detik</option>
+        </select>
+      </label>
+      <label class="row">
+        <span>Batas waktu foto setelah bayar</span>
+        <select class="field" id="set-limit">
+          <option value="0">Tanpa batas</option>
+          <option value="120">2 menit</option>
+          <option value="180">3 menit</option>
+          <option value="300">5 menit</option>
         </select>
       </label>
       <label class="row">

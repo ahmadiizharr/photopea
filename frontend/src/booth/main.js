@@ -21,6 +21,7 @@ const KEY = 'jepret.booth';
 const defaults = {
   layout: 'strip4', frame: 'pink', filter: 'normal', caption: '', countdown: 3, reset: 0, mirror: true, sound: true, camera: '',
   template: '', package: null, printer: false, autoPrint: false,
+  limit: 180, // seconds a paid guest has for shooting and checking; 0 = no limit
 };
 const cfg = { ...defaults, ...load() };
 function load() {
@@ -48,6 +49,9 @@ const state = {
   order: null, // the paid order this guest is shooting on
   pending: null, // order waiting for the kasir
   printed: false,
+  deadline: null, // when a paid session's time runs out (ms)
+  timeUp: false,
+  warned: false,
 };
 
 // ---------------- design: built-in layout or uploaded frame ----------------
@@ -119,7 +123,7 @@ function go(step, { focus = true } = {}) {
 function syncShootUi() {
   document.body.dataset.shooting = String(state.shooting);
   $('#btn-start').disabled = state.step !== 'shoot' || state.shooting || !state.camOk;
-  $('#btn-cancel').hidden = !state.shooting;
+  $('#btn-cancel').hidden = !state.shooting || state.timeUp; // once time is up the run can't be called off
   // once paid, the frame is part of the order and can't be swapped
   $('#shoot-back').hidden = state.shooting || Boolean(state.order);
 }
@@ -429,6 +433,7 @@ function handleOrder(o) {
     state.order = o;
     if (currentPackage()) state.prints = o.prints;
     go('shoot');
+    startLimit();
     return;
   }
   state.pending = o;
@@ -626,6 +631,7 @@ async function shoot(indices, { retake = false } = {}) {
 }
 
 function cancelShoot() {
+  if (state.timeUp) return;
   state.run++;
   state.shooting = false;
   showCount('');
@@ -645,6 +651,7 @@ function review() {
   const l = layout();
   compose(finalCanvas, l, frame(), state.shots, { caption: cfg.caption, date: stamp(), overlay: overlayFor(l) });
   state.stripBlob = null;
+  if (state.timeUp) { saveSession(); return; }
   const list = $('#thumbs');
   list.innerHTML = '';
   state.shots.forEach((shot, i) => {
@@ -664,12 +671,60 @@ function review() {
   });
 }
 
+// ---------------- time limit once paid ----------------
+// Paying starts the clock so a guest can't hold the booth; when it runs out the booth finishes for them.
+let limitTimer = null;
+
+function startLimit() {
+  stopLimit();
+  const secs = Number(cfg.limit);
+  if (!secs) return;
+  state.deadline = Date.now() + secs * 1000;
+  state.timeUp = false;
+  state.warned = false;
+  limitTimer = setInterval(tickLimit, 250);
+  tickLimit();
+}
+
+function stopLimit() {
+  clearInterval(limitTimer);
+  limitTimer = null;
+  state.deadline = null;
+  $('#limit').hidden = true;
+}
+
+function tickLimit() {
+  const left = Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000));
+  const box = $('#limit');
+  box.hidden = state.step !== 'shoot' && state.step !== 'review';
+  box.classList.toggle('low', left <= 30);
+  $('#limit-time').textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  const soon = state.step === 'review' ? 'Disimpan otomatis' : state.shooting ? 'Segera habis' : 'Foto mulai otomatis';
+  $('#limit-label').textContent = left > 30 ? 'Sisa waktu' : left > 0 ? soon : 'Waktu habis';
+  if (left <= 30 && !state.warned) {
+    state.warned = true;
+    if (cfg.sound) sound.beep(660);
+  }
+  if (left > 0) return;
+  clearInterval(limitTimer);
+  limitTimer = null;
+  state.timeUp = true;
+  syncShootUi();
+  if (state.step === 'review') saveSession();
+  else if (state.step === 'shoot' && !state.shooting) {
+    if (state.shots.length && state.shots.every(Boolean)) review();
+    else if (state.camOk) shoot([...Array(layout().shots).keys()]);
+  }
+  // mid-shoot the run carries on and review() saves straight after it
+}
+
 // ---------------- 5. download ----------------
 let resetTimer = null;
 /** Prints follow the package that was paid; without one the booth prints for free. */
 const printsFixed = () => Boolean(state.order && currentPackage());
 
 async function saveSession() {
+  stopLimit();
   go('download');
   $('#saving').hidden = false;
   $('#ticket').hidden = true;
@@ -756,6 +811,8 @@ function finish() {
 }
 
 function newSession() {
+  stopLimit();
+  state.timeUp = false;
   clearInterval(resetTimer);
   clearInterval(doneTimer);
   $('#auto-reset').hidden = true;
@@ -800,6 +857,7 @@ $('#btn-settings').addEventListener('click', () => {
   $('#set-sound').checked = cfg.sound;
   $('#set-printer').checked = cfg.printer;
   $('#set-autoprint').checked = cfg.autoPrint;
+  $('#set-limit').value = String(cfg.limit);
   dlg.showModal();
 });
 $('#set-countdown').addEventListener('change', (e) => { cfg.countdown = Number(e.target.value); save(); });
@@ -808,6 +866,7 @@ $('#set-mirror').addEventListener('change', (e) => { cfg.mirror = e.target.check
 $('#set-sound').addEventListener('change', (e) => { cfg.sound = e.target.checked; save(); });
 $('#set-printer').addEventListener('change', (e) => { cfg.printer = e.target.checked; save(); });
 $('#set-autoprint').addEventListener('change', (e) => { cfg.autoPrint = e.target.checked; save(); });
+$('#set-limit').addEventListener('change', (e) => { cfg.limit = Number(e.target.value); save(); });
 $('#set-camera').addEventListener('change', (e) => { cfg.camera = e.target.value; save(); startCamera(); });
 dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
 
