@@ -413,6 +413,8 @@ section { scroll-margin-top: 80px; }
 .lay-item figcaption b { display: block; font: 800 22px/1.1 var(--display); letter-spacing: -.02em; }
 .lay-item figcaption span { color: var(--ink-2); font-size: 15px; }
 .lay-note { margin: 44px 0 0; max-width: 56ch; color: var(--ink-2); }
+.lay-credit { margin: 10px 0 0; font-size: 11px; color: var(--ink-2); opacity: .75; }
+.lay-credit a { color: inherit; }
 
 /* ---------- why ---------- */
 .why { padding: 110px 0; }

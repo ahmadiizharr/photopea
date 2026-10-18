@@ -67,47 +67,46 @@ go.addEventListener('click', async () => {
 });
 
 // ---------- layout previews (drawn from the real layout geometry) ----------
-const FACE_TINTS = ['#ffd5e6', '#fff1c2', '#dde6ff', '#f4ecdd'];
-const DOTS = ['dots-pink', 'dots-ink', 'dots-blue', 'dots-pink'];
+// Sample photos are Unsplash shots pre-cropped per slot (scripts/make_demo_photos.py).
+// Colours come from CSS variables on the row, so switching paper colour never reloads the photos.
+const PHOTO_TINTS = ['#ffd5e6', '#fff1c2', '#dde6ff', '#f4ecdd'];
 
-function layoutSvg(l, frame) {
+function layoutSvg(l) {
   const cap = l.caption;
   const big = Math.min(cap.h * 0.42, cap.w * 0.2);
   const slots = l.slots
     .map((s, i) => `
-      <svg x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" viewBox="0 0 100 75" preserveAspectRatio="xMidYMid slice">
-        <rect x="-50" y="-50" width="200" height="175" fill="${FACE_TINTS[i % 4]}"/>
-        <rect x="-50" y="-50" width="200" height="175" fill="url(#${DOTS[i % 4]})" opacity=".35"/>
-        <use href="#face-${(i % 4) + 1}"/>
-      </svg>
+      <rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" fill="${PHOTO_TINTS[i % 4]}"/>
+      <image href="/demo/${l.id}-${i + 1}.webp" x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" preserveAspectRatio="xMidYMid slice"/>
       <rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" fill="none" stroke="#16110e" stroke-width="6"/>`)
     .join('');
   return `
-    <rect width="${l.w}" height="${l.h}" fill="${frame.bg}"/>
+    <rect width="${l.w}" height="${l.h}" style="fill: var(--lay-bg)"/>
     ${slots}
-    <text x="${cap.x}" y="${cap.y + cap.h / 2 + big * 0.35}" fill="${frame.text}"
+    <text x="${cap.x}" y="${cap.y + cap.h / 2 + big * 0.35}" style="fill: var(--lay-text)"
       font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="${big}" letter-spacing="-${big * 0.03}">jepret</text>
-    <text x="${cap.x + cap.w}" y="${cap.y + cap.h / 2 + big * 0.35}" text-anchor="end" fill="${frame.text}"
+    <text x="${cap.x + cap.w}" y="${cap.y + cap.h / 2 + big * 0.35}" text-anchor="end" style="fill: var(--lay-text)"
       font-family="DM Mono, monospace" font-size="${big * 0.32}" letter-spacing="${big * 0.03}">${stamp()}</text>
-    <circle cx="${cap.x + cap.w - big * 0.25}" cy="${cap.y + cap.h / 2 - big * 0.55}" r="${big * 0.16}" fill="${frame.accent}" stroke="#16110e" stroke-width="5"/>`;
+    <circle cx="${cap.x + cap.w - big * 0.25}" cy="${cap.y + cap.h / 2 - big * 0.55}" r="${big * 0.16}" style="fill: var(--lay-accent)" stroke="#16110e" stroke-width="5"/>`;
 }
 
 const row = $('#lay-row');
 const DISPLAY_H = 340;
-const items = layouts.map((l) => {
+for (const l of layouts) {
   const fig = document.createElement('figure');
   fig.className = 'lay-item';
   const w = Math.round((l.w / l.h) * DISPLAY_H);
   fig.innerHTML = `
-    <svg viewBox="0 0 ${l.w} ${l.h}" width="${w}" height="${DISPLAY_H}" role="img" aria-label="Contoh layout ${l.name}"></svg>
+    <svg viewBox="0 0 ${l.w} ${l.h}" width="${w}" height="${DISPLAY_H}" role="img" aria-label="Contoh layout ${l.name}">${layoutSvg(l)}</svg>
     <figcaption><b>${l.name}</b><span>${l.note}</span></figcaption>`;
   row.append(fig);
-  return { l, svg: fig.querySelector('svg') };
-});
+}
 
 function paint(frameId) {
   const frame = frames.find((f) => f.id === frameId);
-  for (const { l, svg } of items) svg.innerHTML = layoutSvg(l, frame);
+  row.style.setProperty('--lay-bg', frame.bg);
+  row.style.setProperty('--lay-text', frame.text);
+  row.style.setProperty('--lay-accent', frame.accent);
   for (const b of colors.children) b.setAttribute('aria-checked', String(b.dataset.id === frameId));
 }
 
@@ -122,8 +121,6 @@ for (const f of frames) {
   b.addEventListener('click', () => paint(f.id));
   colors.append(b);
 }
-// wait for the display font so the SVG captions are measured with it
-document.fonts.ready.then(() => paint('pink'));
 paint('pink');
 
 // ---------- code form ----------
