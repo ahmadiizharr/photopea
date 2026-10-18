@@ -190,17 +190,27 @@ class Catalog:
     def frame_path(self, frame_id: str, name: str) -> Path:
         return self.frames_dir / frame_id / name
 
+    LIVE = """SELECT f.*, p.name AS pack_name, p.price AS pack_price FROM frames f JOIN packs p ON p.id = f.pack_id
+              WHERE f.status = 'aktif' AND p.status = 'aktif'"""
+
     def live_frames(self) -> list[dict]:
         """Frames the booth may use: active frame in an active pack."""
+        rows = self._q(self.LIVE + " ORDER BY p.sort, p.created_at, f.created_at")
+        keys = ("id", "name", "pack_id", "pack_name", "pack_price", "format", "w", "h", "slots", "n_photos", "url", "preview")
+        return [{k: f[k] for k in keys} for f in map(self._frame, rows)]
+
+    def live_frame(self, frame_id: str) -> dict | None:
+        """One frame the booth may use, with its pack's price; None when it or its pack is off."""
+        rows = self._q(self.LIVE + " AND f.id = ?", (frame_id,))
+        return self._frame(rows[0]) if rows else None
+
+    def live_packs(self) -> list[dict]:
+        """Active packs that have at least one active frame, in booth order."""
         rows = self._q(
-            """SELECT f.*, p.name AS pack_name FROM frames f JOIN packs p ON p.id = f.pack_id
-               WHERE f.status = 'aktif' AND p.status = 'aktif' ORDER BY p.sort, p.created_at, f.created_at"""
+            """SELECT id, name, description, price FROM packs p WHERE status = 'aktif'
+               AND EXISTS (SELECT 1 FROM frames f WHERE f.pack_id = p.id AND f.status = 'aktif') ORDER BY sort, created_at"""
         )
-        out = []
-        for r in rows:
-            f = self._frame(r)
-            out.append({k: f[k] for k in ("id", "name", "pack_name", "format", "w", "h", "slots", "n_photos", "url", "preview")})
-        return out
+        return [dict(r) for r in rows]
 
     def is_live(self, frame_id: str) -> bool:
         return bool(self._q(

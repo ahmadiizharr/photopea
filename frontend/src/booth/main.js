@@ -33,6 +33,7 @@ const state = {
   stripBlob: null,
   localUrl: null,
   camOk: false,
+  packs: [], // active packs that have at least one active frame
   templates: [], // uploaded frames switched on in the dashboard
   packages: [], // price packages switched on in the dashboard
   prints: 1,
@@ -154,7 +155,15 @@ async function fillCameraList() {
 // ---------------- setup pane ----------------
 function radio(container, items, current, render, onPick) {
   container.innerHTML = '';
+  const options = () => [...container.querySelectorAll('[role="radio"]')];
   for (const it of items) {
+    if (it.heading) {
+      const h = document.createElement('p');
+      h.className = 'opt-head';
+      h.innerHTML = it.heading;
+      container.append(h);
+      continue;
+    }
     const b = document.createElement('button');
     b.type = 'button';
     b.setAttribute('role', 'radio');
@@ -163,7 +172,7 @@ function radio(container, items, current, render, onPick) {
     render(b, it);
     b.addEventListener('click', () => {
       onPick(it.id);
-      for (const x of container.children) x.setAttribute('aria-checked', String(x.dataset.id === String(it.id)));
+      for (const x of options()) x.setAttribute('aria-checked', String(x.dataset.id === String(it.id)));
     });
     container.append(b);
   }
@@ -172,7 +181,7 @@ function radio(container, items, current, render, onPick) {
     const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
     if (!(e.key in keys)) return;
     e.preventDefault();
-    const list = [...container.children];
+    const list = options();
     const i = list.indexOf(document.activeElement);
     const next = list[(i + keys[e.key] + list.length) % list.length];
     next.focus();
@@ -187,11 +196,20 @@ function layoutThumb(l, f) {
 
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
+const priceTag = (n) => (n ? rupiah(n) : 'Gratis');
+const heading = (name, price, note) => ({
+  heading: `<b>${esc(name)}</b><span class="opt-price${price ? '' : ' free'}">${priceTag(price)}</span>${note ? `<small>${esc(note)}</small>` : ''}`,
+});
+
 function renderLayoutOpts() {
-  const items = [
-    ...layouts.map((l) => ({ id: `l:${l.id}`, l })),
-    ...state.templates.map((t) => ({ id: `t:${t.id}`, t })),
-  ];
+  const builtins = layouts.map((l) => ({ id: `l:${l.id}`, l }));
+  // with uploaded frames, group them per pack so guests see what each pack costs
+  const items = state.templates.length
+    ? [heading('Layout bawaan', 0), ...builtins, ...state.packs.flatMap((p) => [
+      heading(p.name, p.price, p.description),
+      ...state.templates.filter((t) => t.pack_id === p.id).map((t) => ({ id: `t:${t.id}`, t })),
+    ])]
+    : builtins;
   const current = currentTemplate() ? `t:${cfg.template}` : `l:${cfg.layout}`;
   radio($('#opt-layout'), items, current,
     (b, it) => {
@@ -211,6 +229,33 @@ function syncDesign() {
   const l = layout();
   document.body.dataset.design = l.template ? 'frame' : 'builtin';
   overlayFor(l);
+  renderSetupTotal();
+}
+
+/** What the guest pays: package (+ extra prints) + the chosen frame's pack. Null when nothing is charged. */
+function bill(prints) {
+  const p = currentPackage();
+  const t = currentTemplate();
+  const parts = [];
+  let total = 0;
+  if (p) {
+    const extra = Math.max(0, prints - p.prints_included);
+    total += p.price + extra * p.extra_print_price;
+    parts.push(extra && p.extra_print_price ? `${esc(p.name)} + ${extra} cetak tambahan` : esc(p.name));
+  }
+  if (t?.pack_price) {
+    total += t.pack_price;
+    parts.push(esc(t.pack_name));
+  }
+  return parts.length ? { total, text: parts.join(' + ') } : null;
+}
+
+function renderSetupTotal() {
+  const p = currentPackage();
+  const b = bill(p ? p.prints_included : 0);
+  const el = $('#setup-total');
+  el.hidden = !b;
+  if (b) el.innerHTML = `Total ${rupiah(b.total)}<span>${b.text} · bayar ke kasir, lalu tekan MULAI</span>`;
 }
 
 function renderPackages() {
@@ -225,12 +270,13 @@ function renderPackages() {
         ? ` · tambah ${rupiah(p.extra_print_price)}/lembar, maks ${p.max_prints}` : '';
       b.innerHTML = `<b>${esc(p.name)}</b><span class="pkg-price">${rupiah(p.price)}</span><small>${p.prints_included ? `${p.prints_included} cetak` : 'tanpa cetak'}${extra}</small>`;
     },
-    (id) => { cfg.package = id; save(); });
+    (id) => { cfg.package = id; save(); renderSetupTotal(); });
 }
 
 async function loadBooth() {
   try {
     const b = await getBooth();
+    state.packs = b.packs ?? [];
     state.templates = b.frames;
     state.packages = b.packages;
   } catch { /* offline or old server: built-in layouts still work */ }
@@ -347,12 +393,10 @@ function renderPrints() {
   $('#prints-note').textContent = p
     ? `${p.prints_included} lembar termasuk paket${p.extra_print_price ? `, tambahan ${rupiah(p.extra_print_price)}/lembar` : ''}${per}`
     : `${rule ? `${rule.page[0]}×${rule.page[1]} inci` : ''}${per}`;
+  const b = bill(state.prints);
   const total = $('#total');
-  total.hidden = !p;
-  if (p) {
-    const extra = Math.max(0, state.prints - p.prints_included) * p.extra_print_price;
-    total.innerHTML = `Total ${rupiah(p.price + extra)}<span>${esc(p.name)}${extra ? ` + ${state.prints - p.prints_included} cetak tambahan` : ''} · bayar ke kasir</span>`;
-  }
+  total.hidden = !b;
+  if (b) total.innerHTML = `Total ${rupiah(b.total)}<span>${b.text} · bayar ke kasir</span>`;
 }
 $('#prints-minus').addEventListener('click', () => { state.prints--; renderPrints(); });
 $('#prints-plus').addEventListener('click', () => { state.prints++; renderPrints(); });

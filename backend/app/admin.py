@@ -224,7 +224,7 @@ def create_router(catalog_json: dict, max_frame_bytes: int) -> APIRouter:
     def booth(request: Request, response: Response):
         c = cat(request)
         response.headers["Cache-Control"] = "no-store"
-        return {"frames": c.live_frames(), "packages": c.packages(active_only=True)}
+        return {"packs": c.live_packs(), "frames": c.live_frames(), "packages": c.packages(active_only=True)}
 
     @router.get("/api/frames/{frame_id}/{name}")
     def frame_file(frame_id: str, name: str, request: Request):

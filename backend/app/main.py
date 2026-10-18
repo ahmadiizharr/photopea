@@ -117,11 +117,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         prints: Annotated[int | None, Form(ge=0, le=20, description="Jumlah lembar yang dicetak")] = None,
     ):
         cat: Catalog = request.app.state.catalog
+        pack_price = 0
         if template:
-            tpl = cat.frame(template)
-            if tpl is None or not cat.is_live(template):
+            tpl = cat.live_frame(template)
+            if tpl is None:
                 raise HTTPException(422, "frame tidak tersedia")
             layout, frame, max_shots = tpl["format"], tpl["id"], tpl["n_photos"]
+            pack_price = tpl["pack_price"]
         else:
             spec = layouts.get(layout or "")
             if spec is None:
@@ -143,6 +145,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if prints > pk["max_prints"]:
                 raise HTTPException(422, f"paket {pk['name']} maksimal {pk['max_prints']} cetak")
             total = pk["price"] + max(0, prints - pk["prints_included"]) * pk["extra_print_price"]
+        # A paid pack is charged on top of the package (or alone when the booth has no packages).
+        if pack_price:
+            total = (total or 0) + pack_price
 
         strip_bytes = await read_limited(strip)
         shot_bytes = [await read_limited(f) for f in shots]

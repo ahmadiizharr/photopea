@@ -18,7 +18,8 @@ deploy/    unit systemd + config nginx yang sedang terpasang
 - **Galeri template** — pack frame (harga, Aktif/Draft). Upload PNG transparan per ukuran cetak; server
   mencari lubang foto sendiri (area alpha < 128), menomorinya, dan mencatat masalah cetak (terlalu dekat
   tepi, melewati garis potong, lubang kecil, piksel semi-transparan). Nomor foto per lubang bisa diubah
-  (strip kembar / semua beda). Frame aktif di pack aktif langsung muncul di booth.
+  (strip kembar / semua beda). Frame aktif di pack aktif langsung muncul di booth, dikelompokkan per pack.
+  Harga pack ditambahkan ke total tamu yang memakai frame dari pack itu (di atas harga paket).
 - **Paket harga** — nama, harga, cetak termasuk, harga cetak tambahan, maks cetak. Tamu memilih paket di
   booth, total dihitung otomatis, bayar ke kasir (belum ada payment gateway).
 - **Panduan ukuran** — spesifikasi dan template PNG siap edit untuk desainer:
@@ -38,6 +39,20 @@ Akun superadmin (satu akun, password di-hash scrypt, disimpan di luar repo):
 cd /srv/photobox/backend && .venv/bin/python -m app.cli set-admin   # tulis /etc/photobox/admin.env (0600)
 systemctl restart photobox
 ```
+
+## Data contoh (dummy)
+
+Untuk mencoba alur pack → booth → total tanpa mendesain frame sendiri:
+
+```bash
+cd /srv/photobox/backend && .venv/bin/python -m app.cli seed-demo   # tanya password superadmin
+.venv/bin/python -m app.cli seed-demo --remove                      # hapus lagi
+```
+
+Membuat lewat API admin: pack **Demo · Klasik** (gratis), **Demo · Pastel** (Rp 10.000), **Demo · Wedding**
+(Rp 25.000), dan **Demo · Draft** (tidak tampil di booth), berisi 7 frame, plus paket **Demo Basic** dan
+**Demo Premium**. Hanya item bernama "Demo …" yang diganti atau dihapus, jadi menjalankannya lagi tidak
+menggandakan data. `--url` dan `--user` untuk server lain (bawaan `http://127.0.0.1:8090`, `admin`).
 
 ## Cetak dari booth
 
@@ -82,8 +97,8 @@ Dokumentasi interaktif: `/api/docs`.
 | Method | Path | Isi |
 |---|---|---|
 | GET | `/api/layouts` | layout, warna kertas, filter (isi `shared/layouts.json`) |
-| GET | `/api/booth` | frame upload yang aktif + paket harga aktif |
-| POST | `/api/sessions` | multipart: `strip` (file), `shots` (file, 1..N), `layout` + `frame` **atau** `template` (ID frame upload), `filter`, opsional `package` + `prints` → sesi |
+| GET | `/api/booth` | pack aktif (nama, deskripsi, harga) + frame upload yang aktif (dengan `pack_id`, `pack_price`) + paket harga aktif |
+| POST | `/api/sessions` | multipart: `strip` (file), `shots` (file, 1..N), `layout` + `frame` **atau** `template` (ID frame upload), `filter`, opsional `package` + `prints` → sesi; `total` = paket + cetak tambahan + harga pack |
 | GET | `/api/sessions/{kode}` | metadata + URL file |
 | GET | `/api/sessions/{kode}/qr.svg` | QR ke `/s/{kode}` |
 | GET | `/media/{kode}/{strip.jpg,anim.gif,shot-N.jpg}` | file; `?dl=1` untuk unduh |

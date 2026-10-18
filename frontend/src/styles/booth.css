@@ -275,6 +275,13 @@ body[data-step='done'] [data-pane='done'] { display: grid; }
 /* uploaded frames sit in the same radiogroup as the built-in layouts */
 .layout-opt img { flex: none; width: auto; height: 62px; max-width: 52px; object-fit: contain; border: 1.5px solid var(--ink); background: #fff; }
 body[data-design='frame'] .builtin-only { display: none; }
+/* pack heading above its frames: name, price, description */
+.opt-head { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 10px 0 0; }
+.opt-head:first-child { margin-top: 0; }
+.opt-head b { font: 700 15px/1.2 var(--body); }
+.opt-head .opt-price { padding: 2px 9px; border: 1.5px solid var(--ink); border-radius: 999px; background: var(--yellow-soft); font: 800 13px/1.2 var(--display); }
+.opt-head .opt-price.free { background: #fff; }
+.opt-head small { flex-basis: 100%; font-size: 13px; color: var(--ink-2); }
 
 .pkg-opts { display: grid; gap: 8px; }
 .pkg-opt {

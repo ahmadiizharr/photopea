@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image, ImageDraw
 
+from app import demo
 from app import frames as framelib
 from app.auth import Auth, hash_password
 from app.config import ROOT, Settings
@@ -217,6 +218,17 @@ def test_live_frame_is_public_and_listed_for_booth(admin):
     assert admin.get(f"/api/frames/{f['id']}/../secret.key").status_code == 404
 
 
+def test_booth_lists_live_packs_with_their_price(admin):
+    f = live_frame(admin)
+    empty = make_pack(admin, name="Kosong", status="aktif")
+    hidden = make_pack(admin, name="Draft")
+    upload_frame(admin, hidden["id"])
+    booth = admin.get("/api/booth").json()
+    assert [(p["id"], p["price"]) for p in booth["packs"]] == [(f["pack_id"], 25000)]
+    assert empty["id"] not in {p["id"] for p in booth["packs"]}
+    assert booth["frames"][0]["pack_id"] == f["pack_id"] and booth["frames"][0]["pack_price"] == 25000
+
+
 def test_photo_numbers_can_be_remapped(admin):
     pack = make_pack(admin)
     f = upload_frame(admin, pack["id"]).json()
@@ -280,8 +292,39 @@ def test_session_with_package_prices_extra_prints(admin):
     assert session(admin, layout="strip4", frame="pink", package=p["id"]).status_code == 422
 
 
+def test_session_charges_pack_price_on_top_of_package(admin):
+    f = live_frame(admin)  # pack price 25000
+    assert session(admin, template=f["id"]).json()["total"] == 25000
+    p = package(admin).json()
+    s = session(admin, template=f["id"], package=p["id"], prints=2).json()
+    assert s["total"] == 35000 + 20000 + 25000
+    admin.patch(f"/api/admin/packs/{f['pack_id']}", json={"price": 0}, headers=H)
+    assert session(admin, template=f["id"]).json()["total"] is None
+
+
 def test_builtin_session_still_needs_layout_and_frame(client):
     assert session(client).status_code == 422
     assert session(client, layout="strip4").status_code == 422
     r = session(client, layout="strip4", frame="pink")
     assert r.status_code == 201 and r.json()["layout_name"] == "Strip 4"
+
+
+# ---------------- demo data ----------------
+def test_demo_seed_fills_booth_and_removes_only_itself(admin):
+    def api(method, path, payload=None, files=None):
+        r = admin.request(method, path, json=None if files else payload, data=payload if files else None, files=files, headers=H)
+        assert r.status_code < 400, r.text
+        return r.json()
+
+    mine = make_pack(admin, name="Pack Asli")
+    demo.seed(api, log=lambda _: None)
+    booth = admin.get("/api/booth").json()
+    assert [p["name"] for p in booth["packs"]] == ["Demo · Klasik", "Demo · Pastel", "Demo · Wedding"]
+    assert len(booth["frames"]) == 6 and {p["name"] for p in booth["packages"]} == {"Demo Basic", "Demo Premium"}
+    packs = admin.get("/api/admin/packs").json()
+    errors = [i for p in packs for f in p["frames"] for i in f["issues"] if i["level"] != "info"]
+    assert errors == []
+
+    demo.remove(api, log=lambda _: None)
+    assert [p["id"] for p in admin.get("/api/admin/packs").json()] == [mine["id"]]
+    assert admin.get("/api/admin/packages").json() == []

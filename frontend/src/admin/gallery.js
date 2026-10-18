@@ -15,7 +15,7 @@ export const packFields = (p = {}) => `
   <label class="row"><span>Nama pack</span><input class="field" name="name" maxlength="40" required value="${esc(p.name)}" placeholder="Pack Pastel" /></label>
   <label class="row"><span>Deskripsi <small>(opsional)</small></span><input class="field" name="description" maxlength="160" value="${esc(p.description)}" placeholder="Frame pastel lucu buat wisuda" /></label>
   <div class="grid2">
-    <label class="row"><span>Harga <small>(0 = gratis)</small></span><input class="field" name="price" data-num inputmode="numeric" value="${p.price ?? 0}" /></label>
+    <label class="row"><span>Harga <small>(0 = gratis · ditambahkan ke total tamu)</small></span><input class="field" name="price" data-num inputmode="numeric" value="${p.price ?? 0}" /></label>
     <label class="row"><span>Status</span>
       <select class="field" name="status">
         <option value="draft"${p.status !== 'aktif' ? ' selected' : ''}>Draft</option>
@@ -67,7 +67,7 @@ export async function renderGallery(view) {
         </div>
         <button class="btn btn-pink" type="button" id="new-pack">+ Pack baru</button>
       </div>
-      <div class="note-bar"><span>Frame di pack <b>Aktif</b> langsung muncul di booth. Upload PNG transparan, sistem mencari lubang fotonya sendiri.</span></div>
+      <div class="note-bar"><span>Frame di pack <b>Aktif</b> langsung muncul di booth, dikelompokkan per pack. Harga pack ditambahkan ke total tamu yang memakai frame-nya. Upload PNG transparan, sistem mencari lubang fotonya sendiri.</span></div>
       <div class="filters" role="group" aria-label="Saring pack">
         ${Object.entries(groups).map(([k, [label, fn]]) => `
           <button class="chip" type="button" data-f="${k}" aria-pressed="${k === filter}">${label} <span>${packs.filter(fn).length}</span></button>`).join('')}
